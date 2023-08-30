@@ -12,12 +12,6 @@ to use a MediaPlayer to read media from a file.
 This example also illustrates how to use a MediaRecorder to capture media to a
 file.
 
-First install the required packages:
-
-.. code-block:: console
-
-   $ pip install aiortc opencv-python
-
 Running the example
 -------------------
 
@@ -35,12 +29,11 @@ To run the example, you will need instances of the `cli` example:
 
    $ python cli.py producer -v
 
-- The second takes on the role of the answerer. When given an offer, it will
-  generate an answer which you must copy-and-paste to the offerer.
+- The second takes on the role of the consumer.
 
 .. code-block:: console
 
-   $ python cli.py consumer -v --remote-producer-peer-id <peer-id>
+   $ python cli.py consumer -v --remote-producer-peer-id <producer-peer-id>
 
 Additional options
 ------------------
