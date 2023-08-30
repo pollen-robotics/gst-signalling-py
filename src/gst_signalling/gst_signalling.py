@@ -3,41 +3,46 @@ import json
 import logging
 from typing import List, Optional
 import pyee
-import websockets
+from websockets.legacy.client import connect, WebSocketClientProtocol
 
 
 class GstSignalling(pyee.AsyncIOEventEmitter):
-    def __init__(self, host: str, port: int):
-        super().__init__()
+    def __init__(self, host: str, port: int) -> None:
+        pyee.AsyncIOEventEmitter.__init__()
 
         self.logger = logging.getLogger(__name__)
 
-        self.ws = None
+        self.ws: Optional[WebSocketClientProtocol] = None
         self.host = host
         self.port = port
 
         self.peer_id: Optional[str] = None
         self.session_id: Optional[str] = None
 
-    async def connect(self):
+    async def connect(self) -> None:
         if self.ws is not None:
             raise RuntimeError("Already connected.")
 
         url = f"ws://{self.host}:{self.port}"
         self.logger.info(f"Connecting to {url}")
-        self.ws = await websockets.connect(url)
-        self.logger.info(f"Connected.")
+        self.ws = await connect(url)
+        self.logger.info("Connected.")
 
-        asyncio.create_task(self.handler())
+        asyncio.create_task(self._handler())
 
-    async def close(self):
+    async def close(self) -> None:
+        if self.ws is None:
+            raise RuntimeError("Not connected.")
+
         self.logger.info("Closing connection.")
         await self.ws.close()
-        self.logger.info(f"Closed.")
+        self.logger.info("Closed.")
 
     # Input messages handler
-    async def handler(self):
-        self.logger.info(f"Starting input message handler.")
+    async def _handler(self) -> None:
+        assert self.ws is not None
+
+        self.logger.info("Starting input message handler.")
 
         async for message in self.ws:
             self.logger.info(f"Received message: {message}")
@@ -93,7 +98,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
                 self.logger.warning(f"Received unknown message type: {message}.")
 
     # Output messages publisher
-    async def set_peer_status(self, roles: List[str], name: str):
+    async def set_peer_status(self, roles: List[str], name: str) -> None:
         if self.ws is None:
             raise RuntimeError("Not connected.")
         if self.peer_id is None:
@@ -112,11 +117,11 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         await self.send(message)
 
-    async def start_session(self, peer_id: str):
+    async def start_session(self, peer_id: str) -> None:
         message = {"type": "startSession", "peerId": peer_id}
         await self.send(message)
 
-    async def send_peer_message(self, type: str, peer_message: str):
+    async def send_peer_message(self, type: str, peer_message: str) -> None:
         message = {
             "type": "peer",
             "sessionId": self.session_id,
@@ -125,8 +130,9 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         await self.send(message)
 
-    async def send(self, message):
-        # self.logger.debug(f"Sending message: {message}")
-        self.logger.info(f"Sending message: {message}")
-        message = json.dumps(message)
-        await self.ws.send(message)
+    async def send(self, message) -> None:
+        if self.ws is None:
+            raise RuntimeError("Not connected.")
+
+        self.logger.debug(f"Sending message: {message}")
+        await self.ws.send(json.dumps(message))
