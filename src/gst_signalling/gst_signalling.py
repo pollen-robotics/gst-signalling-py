@@ -31,7 +31,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         asyncio.create_task(self.handler())
 
     async def close(self):
-        self.logger.info(f"Closing connection.")
+        self.logger.info("Closing connection.")
         await self.ws.close()
         self.logger.info(f"Closed.")
 
@@ -86,7 +86,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
             elif message["type"] == "error":
                 details = message["details"]
-                self.logger.error(f"An error occured: \"{details}\"")
+                self.logger.error(f'An error occured: "{details}"')
                 self.emit("Error", details)
 
             else:
@@ -102,21 +102,18 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         for role in roles:
             if role not in ("consumer", "listener", "producer"):
                 raise ValueError(f"Invalid role {role}.")
-        
+
         message = {
             "type": "setPeerStatus",
             "roles": roles,
             "meta": {"name": name},
-            "peerId": self.peer_id
+            "peerId": self.peer_id,
         }
 
         await self.send(message)
 
     async def start_session(self, peer_id: str):
-        message = {
-            "type": "startSession",
-            "peerId": peer_id
-        }
+        message = {"type": "startSession", "peerId": peer_id}
         await self.send(message)
 
     async def send_peer_message(self, type: str, peer_message: str):
