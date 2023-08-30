@@ -20,3 +20,5 @@ echo "-------> Flake8 passed!"
 mypy .
 echo "-------> Mypy passed!"
 
+# Run pytest
+coverage run -m pytest
