@@ -1,14 +1,14 @@
 import asyncio
 import json
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 import pyee
 from websockets.legacy.client import connect, WebSocketClientProtocol
 
 
 class GstSignalling(pyee.AsyncIOEventEmitter):
     def __init__(self, host: str, port: int) -> None:
-        pyee.AsyncIOEventEmitter.__init__()
+        pyee.AsyncIOEventEmitter.__init__(self)  # type: ignore[no-untyped-call]
 
         self.logger = logging.getLogger(__name__)
 
@@ -44,9 +44,11 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         self.logger.info("Starting input message handler.")
 
-        async for message in self.ws:
-            self.logger.info(f"Received message: {message}")
-            message = json.loads(message)
+        async for data in self.ws:
+            assert isinstance(data, str)
+
+            self.logger.info(f"Received message: {data}")
+            message: Dict[str, Any] = json.loads(data)
 
             # Welcoming message, sets the Peer ID linked to a new connection
             if message["type"] == "welcome":
@@ -130,7 +132,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         await self.send(message)
 
-    async def send(self, message) -> None:
+    async def send(self, message: Dict[str, Any]) -> None:
         if self.ws is None:
             raise RuntimeError("Not connected.")
 
