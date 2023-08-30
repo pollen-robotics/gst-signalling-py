@@ -1,8 +1,8 @@
-import json
 from aiortc import RTCIceCandidate, RTCSessionDescription
 from aiortc.contrib.signaling import object_from_string, object_to_string
 import argparse
 import asyncio
+import json
 import logging
 from typing import Any, Optional, Union
 

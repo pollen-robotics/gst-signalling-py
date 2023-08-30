@@ -1,8 +1,8 @@
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional
 import pyee
+from typing import Any, Dict, List, Optional
 from websockets.legacy.client import connect, WebSocketClientProtocol
 
 
@@ -47,7 +47,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         async for data in self.ws:
             assert isinstance(data, str)
 
-            self.logger.info(f"Received message: {data}")
+            self.logger.debug(f"Received message: {data}")
             message: Dict[str, Any] = json.loads(data)
 
             # Welcoming message, sets the Peer ID linked to a new connection
@@ -56,7 +56,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
                 self.peer_id = peer_id
                 self.emit("Welcome", peer_id)
 
-            # Notifies listener that a peer status has changed
+            # Notifies listeners that a peer status has changed
             elif message["type"] == "peerStatusChanged":
                 self.logger.error(f"Unimplemented message handler {message}")
 
@@ -91,6 +91,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
             elif message["type"] == "list":
                 self.logger.error(f"Unimplemented message handler {message}")
 
+            # Notifies that an error occured with the peer's current session
             elif message["type"] == "error":
                 details = message["details"]
                 self.logger.error(f'An error occured: "{details}"')
@@ -101,13 +102,11 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
     # Output messages publisher
     async def set_peer_status(self, roles: List[str], name: str) -> None:
-        if self.ws is None:
-            raise RuntimeError("Not connected.")
         if self.peer_id is None:
             raise RuntimeError("PeerId not yet received.")
 
         for role in roles:
-            if role not in ("consumer", "listener", "producer"):
+            if role not in ("listener", "producer"):
                 raise ValueError(f"Invalid role {role}.")
 
         message = {
@@ -120,10 +119,16 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         await self.send(message)
 
     async def start_session(self, peer_id: str) -> None:
+        if self.peer_id is None:
+            raise RuntimeError("PeerId not yet received.")
+
         message = {"type": "startSession", "peerId": peer_id}
         await self.send(message)
 
     async def send_peer_message(self, type: str, peer_message: str) -> None:
+        if self.session_id is None:
+            raise RuntimeError("SessionId not yet received.")
+
         message = {
             "type": "peer",
             "sessionId": self.session_id,
