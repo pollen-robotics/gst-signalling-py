@@ -10,6 +10,12 @@ from .gst_signalling import GstSignalling
 
 
 class GstSignalingForAiortc:
+    """Gstreamer signalling for aiortc.
+
+    This class is a wrapper around GstSignalling that provides a simple interface,
+    that should be mostly compatible with aiortc examples.
+    """
+
     def __init__(
         self,
         signaling_host: str,
@@ -18,6 +24,15 @@ class GstSignalingForAiortc:
         name: str,
         remote_producer_peer_id: Optional[str] = None,
     ):
+        """Initializes the signalling peer.
+
+        Args:
+            signaling_host (str): Hostname of the signalling server.
+            signaling_port (int): Port of the signalling server.
+            role (str): Signalling role (consumer or producer).
+            name (str): Peer name.
+            remote_producer_peer_id (Optional[str], optional): Producer peer_id (required in consumer role!).
+        """
         self.logger = logging.getLogger(__name__)
         self.signalling = GstSignalling(signaling_host, signaling_port)
 
@@ -97,6 +112,11 @@ class GstSignalingForAiortc:
             self.session_id_evt.set()
 
     async def connect(self) -> None:
+        """Connects to the signalling server.
+
+        This method will block until the connection is established (meaning we received a PeerID and a SessionID).
+        This method has to be called before any other method.
+        """
         await self.signalling.connect()
         await self.peer_id_evt.wait()
 
@@ -113,11 +133,17 @@ class GstSignalingForAiortc:
         )
 
     async def close(self) -> None:
+        """Closes the connection to the signalling server."""
         await self.signalling.close()
 
     async def send(
         self, message: Union[RTCIceCandidate, RTCSessionDescription]
     ) -> None:
+        """Sends a message to the other peer (SDP or ICECandidate).
+
+        Args:
+            message (Union[RTCIceCandidate, RTCSessionDescription]): Message to send.
+        """
         if isinstance(message, RTCSessionDescription):
             await self.signalling.send_peer_message(
                 "sdp", json.loads(object_to_string(message))
@@ -130,6 +156,7 @@ class GstSignalingForAiortc:
             raise ValueError(f"Invalid message type {type(message)}")
 
     async def receive(self) -> Union[RTCIceCandidate, RTCSessionDescription]:
+        """Receives a message from the other peer (SDP or ICECandidate)."""
         obj = await self.peer_msg_queue.get()
         self.logger.info(f"Received peer message: {obj}")
         return obj
@@ -139,6 +166,7 @@ BYE = object()
 
 
 def create_signaling(args: argparse.Namespace) -> GstSignalingForAiortc:
+    """Creates a GstSignalingForAiortc instance from command line arguments."""
     return GstSignalingForAiortc(
         signaling_host=args.signaling_host,
         signaling_port=args.signaling_port,
@@ -149,6 +177,14 @@ def create_signaling(args: argparse.Namespace) -> GstSignalingForAiortc:
 
 
 def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
+    """Adds command line arguments for GstSignalingForAiortc.
+
+    * signaling-host: Hostname of the signalling server.
+    * signaling-port: Port of the signalling server.
+    * role: Signalling role (consumer or producer).
+    * name: Peer name.
+    * remote-producer-peer-id: Producer peer_id (required in consumer role!).
+    """
     parser.add_argument(
         "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
     )
