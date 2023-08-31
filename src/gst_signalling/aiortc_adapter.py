@@ -12,7 +12,8 @@ from .gst_signalling import GstSignalling
 class GstSignalingForAiortc:
     """Gstreamer signalling for aiortc.
 
-    This class is a wrapper around GstSignalling that provides a simple interface that should be mostly compatible with aiortc examples.
+    This class is a wrapper around GstSignalling that provides a simple interface,
+    that should be mostly compatible with aiortc examples.
     """
 
     def __init__(
