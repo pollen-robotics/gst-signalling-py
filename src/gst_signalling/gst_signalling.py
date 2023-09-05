@@ -93,8 +93,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
             # Welcoming message, sets the Peer ID linked to a new connection
             if message["type"] == "welcome":
-                # peer_id = message["peerId"]
-                peer_id = message["peer_id"]
+                peer_id = message["peerId"]
                 self.peer_id = peer_id
                 self.emit("Welcome", peer_id)
 
