@@ -13,14 +13,17 @@ First, run the gtreamer signaling server (see https://gitlab.freedesktop.org/gst
 
 To run the example, you will need instances of the `cli` example:
 
-- The first takes on the role of the producer. It will show its PeerId that you will need to copy paste to the second instance.
+- The first takes on the role of the producer and sets its name to `datachannel-cli-producer`.
 
 .. code-block:: console
 
-   $ python cli.py producer -v
+   $ python cli.py producer --name datachannel-cli-producer
 
-- The second takes on the role of the consumer. 
+- The second takes on the role of the consumer and uses the producer name to find it. 
 
 .. code-block:: console
 
-   $ python cli.py consumer -v --remote-producer-peer-id <producer-peer-id>
+   $ python cli.py consumer --remote-producer-peer-name datachannel-cli-producer
+
+
+You can also use peer_id instead of peer_name.
