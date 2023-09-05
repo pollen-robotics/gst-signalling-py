@@ -7,6 +7,7 @@ import logging
 from typing import Any, Optional, Union
 
 from .gst_signalling import GstSignalling
+from .utils import find_producer_peer_id_by_name
 
 
 class GstSignalingForAiortc:
@@ -167,12 +168,31 @@ BYE = object()
 
 def create_signaling(args: argparse.Namespace) -> GstSignalingForAiortc:
     """Creates a GstSignalingForAiortc instance from command line arguments."""
+    if args.role == "consumer":
+        if (
+            args.remote_producer_peer_id is None
+            and args.remote_producer_peer_name is None
+        ):
+            raise ValueError(
+                "In consumer role, you have to specify the remote-producer-peer-id or remote-producer-peer-name!"
+            )
+        elif args.remote_producer_peer_id is not None:
+            remote_producer_peer_id = args.remote_producer_peer_id
+        else:
+            remote_producer_peer_id = find_producer_peer_id_by_name(
+                host=args.signaling_host,
+                port=args.signaling_port,
+                name=args.remote_producer_peer_name,
+            )
+    else:
+        remote_producer_peer_id = None
+
     return GstSignalingForAiortc(
         signaling_host=args.signaling_host,
         signaling_port=args.signaling_port,
         role=args.role,
         name=args.name,
-        remote_producer_peer_id=args.remote_producer_peer_id,
+        remote_producer_peer_id=remote_producer_peer_id,
     )
 
 
@@ -196,5 +216,10 @@ def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--remote-producer-peer-id",
         type=str,
-        help="producer peer_id (required in consumer role!)",
+        help="producer peer_id (in consumer role, either set this or remote-producer-peer-name!)",
+    )
+    parser.add_argument(
+        "--remote-producer-peer-name",
+        type=str,
+        help="producer peer_name (in consumer role, either set this or remote-producer-peer-id!)",
     )
