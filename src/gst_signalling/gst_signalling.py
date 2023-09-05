@@ -19,7 +19,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
     - "StartSession":  Start a session with a producer peer (see start_session)
     - "EndSession": End an existing session (TODO)
     - "Peer": Send a message to a peer the sender is currently in session with (see send_peer_message)
-    - "List": Retrieve the current list of producers (TODO)
+    - "List": Retrieve the current list of producers (see get_list)
 
     Server --> Peer
     - "Welcome": Welcoming message, sets the Peer ID linked to a new connection
@@ -193,6 +193,11 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
             type: peer_message,
         }
 
+        await self._send(message)
+
+    async def get_list(self) -> None:
+        """Requests the current list of producers."""
+        message = {"type": "list"}
         await self._send(message)
 
     async def _send(self, message: Dict[str, Any]) -> None:
