@@ -93,7 +93,8 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
             # Welcoming message, sets the Peer ID linked to a new connection
             if message["type"] == "welcome":
-                peer_id = message["peerId"]
+                # peer_id = message["peerId"]
+                peer_id = message["peer_id"]
                 self.peer_id = peer_id
                 self.emit("Welcome", peer_id)
 
@@ -130,7 +131,9 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
             # Provides the current list of consumer peers
             elif message["type"] == "list":
-                self.logger.error(f"Unimplemented message handler {message}")
+                producers = message["producers"]
+                producers = {p["id"]: p["meta"] for p in producers}
+                self.emit("List", producers)
 
             # Notifies that an error occured with the peer's current session
             elif message["type"] == "error":
@@ -195,7 +198,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         await self._send(message)
 
-    async def get_list(self) -> None:
+    async def send_list(self) -> None:
         """Requests the current list of producers."""
         message = {"type": "list"}
         await self._send(message)
