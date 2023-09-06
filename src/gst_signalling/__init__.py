@@ -1,2 +1,3 @@
 from .aiortc_adapter import GstSignalingForAiortc  # noqa: F401
-from .gst_signalling import GstSignalling  # noqa: F401
+from .gst_consumer import GstSignallingConsumer  # noqa: F401
+from .gst_producer import GstSignallingProducer  # noqa: F401

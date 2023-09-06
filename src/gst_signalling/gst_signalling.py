@@ -56,7 +56,6 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         self.port = port
 
         self.peer_id: Optional[str] = None
-        self.session_id: Optional[str] = None
         self.handler_task: Optional[asyncio.Task[None]] = None
 
     async def connect(self) -> None:
@@ -116,29 +115,26 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         elif message["type"] == "startSession":
             peer_id = message["peerId"]
             session_id = message["sessionId"]
-            self.session_id = session_id
             self.emit("StartSession", peer_id, session_id)
 
         # Let consumer know that the requested session is starting with the specified identifier
         elif message["type"] == "sessionStarted":
             peer_id = message["peerId"]
             session_id = message["sessionId"]
-            self.session_id = session_id
             self.emit("SessionStarted", peer_id, session_id)
 
         # Signals that the session the peer was in was ended
         elif message["type"] == "endSession":
-            closed_session_id = self.session_id
-            self.session_id = None
-            self.emit("EndSession", closed_session_id)
+            session_id = message["sessionId"]
+            self.emit("EndSession", session_id)
 
         # Messages directly forwarded from one peer to another
         elif message["type"] == "peer":
-            assert message["sessionId"] == self.session_id
+            session_id = message["sessionId"]
             message = dict(message)
             del message["type"]
             del message["sessionId"]
-            self.emit("Peer", message)
+            self.emit("Peer", session_id, message)
 
         # Provides the current list of consumer peers
         elif message["type"] == "list":
@@ -191,19 +187,19 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         message = {"type": "startSession", "peerId": peer_id}
         await self._send(message)
 
-    async def send_peer_message(self, type: str, peer_message: str) -> None:
+    async def send_peer_message(
+        self, session_id: str, type: str, peer_message: str
+    ) -> None:
         """Sends a message to a peer the sender is currently in session with.
 
         Args:
+            session_id (str): Session ID.
             type (str): Type of the message (sdp or ice).
             peer_message (str): Message to send (sdp or icecandidate).
         """
-        if self.session_id is None:
-            raise RuntimeError("SessionId not yet received.")
-
         message = {
             "type": "peer",
-            "sessionId": self.session_id,
+            "sessionId": session_id,
             type: peer_message,
         }
 

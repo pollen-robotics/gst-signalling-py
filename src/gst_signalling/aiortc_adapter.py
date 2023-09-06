@@ -72,7 +72,9 @@ class GstSignalingForAiortc:
             self._setup_consumer(remote_producer_peer_id)
 
         @self.signalling.on("Peer")
-        async def on_peer(message: dict[str, Any]) -> None:
+        async def on_peer(session_id: str, message: dict[str, Any]) -> None:
+            assert self.session_id == session_id
+
             if "sdp" in message:
                 message = message["sdp"]
             elif "ice" in message:
@@ -147,11 +149,11 @@ class GstSignalingForAiortc:
         """
         if isinstance(message, RTCSessionDescription):
             await self.signalling.send_peer_message(
-                "sdp", json.loads(object_to_string(message))
+                self.session_id, "sdp", json.loads(object_to_string(message))
             )
         elif isinstance(message, RTCIceCandidate):
             await self.signalling.send_peer_message(
-                "ice", json.loads(object_to_string(message))
+                self.session_id, "ice", json.loads(object_to_string(message))
             )
         else:
             raise ValueError(f"Invalid message type {type(message)}")
