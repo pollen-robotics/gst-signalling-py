@@ -17,3 +17,5 @@ class GstSignallingProducer(GstSignallingAbstractRole):
         pc = session.pc
         await pc.setLocalDescription(await pc.createOffer())
         await self.send_sdp(session_id, pc.localDescription)
+
+        return session

@@ -1,3 +1,4 @@
+from aiortc import RTCPeerConnection
 import asyncio
 import logging
 import time
@@ -11,23 +12,23 @@ async def run_producer(producer: GstSignallingProducer) -> None:
         await asyncio.sleep(1)
 
 
-async def setup_tracks(pc):
+async def setup_tracks(pc: RTCPeerConnection) -> None:
     channel = pc.createDataChannel("chat")
 
-    async def send_pings():
+    async def send_pings() -> None:
         while True:
             channel.send("ping %d" % current_stamp())
             await asyncio.sleep(1)
 
     @channel.on("open")
-    def on_open():
+    def on_open() -> None:
         asyncio.ensure_future(send_pings())
 
 
 time_start = None
 
 
-def current_stamp():
+def current_stamp() -> int:
     global time_start
 
     if time_start is None:

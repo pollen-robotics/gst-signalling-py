@@ -1,3 +1,4 @@
+from aiortc import RTCDataChannel, RTCPeerConnection
 import asyncio
 import logging
 from gst_signalling import GstSignallingConsumer
@@ -11,11 +12,11 @@ async def run_consumer(consumer: GstSignallingConsumer) -> None:
         await asyncio.sleep(1)
 
 
-async def setup_tracks(pc):
+async def setup_tracks(pc: RTCPeerConnection) -> None:
     @pc.on("datachannel")
-    def on_datachannel(channel):
+    def on_datachannel(channel: RTCDataChannel) -> None:
         @channel.on("message")
-        def on_message(message):
+        def on_message(message: str) -> None:
             print("received message:", message)
 
 

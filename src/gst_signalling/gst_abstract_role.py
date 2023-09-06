@@ -110,7 +110,7 @@ class GstSignallingAbstractRole:
         session = self.sessions.pop(session_id)
         await session.pc.close()
 
-    async def send_sdp(self, session_id: str, sdp: RTCSessionDescription):
+    async def send_sdp(self, session_id: str, sdp: RTCSessionDescription) -> None:
         await self.signalling.send_peer_message(
             session_id, "sdp", json.loads(object_to_string(sdp))
         )
