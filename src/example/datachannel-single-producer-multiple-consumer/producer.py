@@ -6,35 +6,6 @@ import time
 from gst_signalling import GstSignallingProducer
 
 
-async def setup_tracks(pc: RTCPeerConnection) -> None:
-    channel = pc.createDataChannel("chat")
-
-    async def send_pings() -> None:
-        try:
-            while True:
-                channel.send("ping %d" % current_stamp())
-                await asyncio.sleep(1)
-        except aiortc.exceptions.InvalidStateError:
-            print("Channel closed")
-
-    @channel.on("open")
-    def on_open() -> None:
-        asyncio.ensure_future(send_pings())
-
-
-time_start = None
-
-
-def current_stamp() -> int:
-    global time_start
-
-    if time_start is None:
-        time_start = time.time()
-        return 0
-    else:
-        return int((time.time() - time_start) * 1000000)
-
-
 if __name__ == "__main__":
     import argparse
 
@@ -53,6 +24,24 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.INFO)
     elif args.verbose > 1:
         logging.basicConfig(level=logging.DEBUG)
+
+    async def setup_tracks(pc: RTCPeerConnection) -> None:
+        channel = pc.createDataChannel("chat")
+
+        async def send_pings() -> None:
+            try:
+                t0 = time.time()
+
+                while True:
+                    dt = time.time() - t0
+                    channel.send(f"ping: {dt:.1f}s")
+                    await asyncio.sleep(1)
+            except aiortc.exceptions.InvalidStateError:
+                print("Channel closed")
+
+        @channel.on("open")
+        def on_open() -> None:
+            asyncio.ensure_future(send_pings())
 
     producer = GstSignallingProducer(
         host=args.signaling_host,
