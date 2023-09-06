@@ -57,6 +57,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         self.peer_id: Optional[str] = None
         self.session_id: Optional[str] = None
+        self.handler_task: Optional[asyncio.Task[None]] = None
 
     async def connect(self) -> None:
         """Connects to the signalling server."""
@@ -68,12 +69,17 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         self.ws = await connect(url)
         self.logger.info("Connected.")
 
-        asyncio.create_task(self._handler())
+        self.handler_task = asyncio.create_task(self._handler())
 
     async def close(self) -> None:
         """Closes the connection to the signalling server."""
         if self.ws is None:
             raise RuntimeError("Not connected.")
+
+        if self.handler_task is not None:
+            self.handler_task.cancel()
+            await self.handler_task
+            self.handler_task = None
 
         self.logger.info("Closing connection.")
         await self.ws.close()
@@ -85,63 +91,69 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         self.logger.info("Starting input message handler.")
 
-        async for data in self.ws:
-            assert isinstance(data, str)
+        try:
+            async for data in self.ws:
+                assert isinstance(data, str)
 
-            self.logger.debug(f"Received message: {data}")
-            message: Dict[str, Any] = json.loads(data)
+                self.logger.debug(f"Received message: {data}")
+                message: Dict[str, Any] = json.loads(data)
+                await self._handle_messages(message)
+        except asyncio.CancelledError:
+            self.logger.info("Input message handler cancelled.")
 
-            # Welcoming message, sets the Peer ID linked to a new connection
-            if message["type"] == "welcome":
-                peer_id = message["peerId"]
-                self.peer_id = peer_id
-                self.emit("Welcome", peer_id)
+    async def _handle_messages(self, message: Dict[str, Any]) -> None:
+        # Welcoming message, sets the Peer ID linked to a new connection
+        if message["type"] == "welcome":
+            peer_id = message["peerId"]
+            self.peer_id = peer_id
+            self.emit("Welcome", peer_id)
 
-            # Notifies listeners that a peer status has changed
-            elif message["type"] == "peerStatusChanged":
-                self.logger.error(f"Unimplemented message handler {message}")
+        # Notifies listeners that a peer status has changed
+        elif message["type"] == "peerStatusChanged":
+            self.logger.error(f"Unimplemented message handler {message}")
 
-            # Instructs a peer to generate an offer and inform about the session ID
-            elif message["type"] == "startSession":
-                peer_id = message["peerId"]
-                session_id = message["sessionId"]
-                self.session_id = session_id
-                self.emit("StartSession", peer_id, session_id)
+        # Instructs a peer to generate an offer and inform about the session ID
+        elif message["type"] == "startSession":
+            peer_id = message["peerId"]
+            session_id = message["sessionId"]
+            self.session_id = session_id
+            self.emit("StartSession", peer_id, session_id)
 
-            # Let consumer know that the requested session is starting with the specified identifier
-            elif message["type"] == "sessionStarted":
-                peer_id = message["peerId"]
-                session_id = message["sessionId"]
-                self.session_id = session_id
-                self.emit("SessionStarted", peer_id, session_id)
+        # Let consumer know that the requested session is starting with the specified identifier
+        elif message["type"] == "sessionStarted":
+            peer_id = message["peerId"]
+            session_id = message["sessionId"]
+            self.session_id = session_id
+            self.emit("SessionStarted", peer_id, session_id)
 
-            # Signals that the session the peer was in was ended
-            elif message["type"] == "endSession":
-                self.session_id = None
-                self.emit("EndSession", session_id)
+        # Signals that the session the peer was in was ended
+        elif message["type"] == "endSession":
+            closed_session_id = self.session_id
+            self.session_id = None
+            self.emit("EndSession", closed_session_id)
 
-            # Messages directly forwarded from one peer to another
-            elif message["type"] == "peer":
-                assert message["sessionId"] == self.session_id
-                message = dict(message)
-                del message["type"]
-                del message["sessionId"]
-                self.emit("Peer", message)
+        # Messages directly forwarded from one peer to another
+        elif message["type"] == "peer":
+            assert message["sessionId"] == self.session_id
+            message = dict(message)
+            del message["type"]
+            del message["sessionId"]
+            self.emit("Peer", message)
 
-            # Provides the current list of consumer peers
-            elif message["type"] == "list":
-                producers = message["producers"]
-                producers = {p["id"]: p["meta"] for p in producers}
-                self.emit("List", producers)
+        # Provides the current list of consumer peers
+        elif message["type"] == "list":
+            producers = message["producers"]
+            producers = {p["id"]: p["meta"] for p in producers}
+            self.emit("List", producers)
 
-            # Notifies that an error occured with the peer's current session
-            elif message["type"] == "error":
-                details = message["details"]
-                self.logger.error(f'An error occured: "{details}"')
-                self.emit("Error", details)
+        # Notifies that an error occured with the peer's current session
+        elif message["type"] == "error":
+            details = message["details"]
+            self.logger.error(f'An error occured: "{details}"')
+            self.emit("Error", details)
 
-            else:
-                self.logger.warning(f"Received unknown message type: {message}.")
+        else:
+            self.logger.warning(f"Received unknown message type: {message}.")
 
     # Messages (peer --> server)
     async def set_peer_status(self, roles: List[str], name: str) -> None:
