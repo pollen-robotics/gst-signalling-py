@@ -1,15 +1,3 @@
-from collections import namedtuple
-import json
-from typing import Any, Dict, Optional
-from aiortc import (
-    RTCIceCandidate,
-    RTCPeerConnection,
-    RTCSessionDescription,
-)
-from aiortc.contrib.signaling import object_from_string, object_to_string
-import asyncio
-import logging
-
 from .gst_abstract_role import GstSession, GstSignallingAbstractRole
 
 
