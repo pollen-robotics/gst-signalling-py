@@ -1,3 +1,4 @@
+import aiortc
 from aiortc import RTCPeerConnection
 import asyncio
 import logging
@@ -16,9 +17,12 @@ async def setup_tracks(pc: RTCPeerConnection) -> None:
     channel = pc.createDataChannel("chat")
 
     async def send_pings() -> None:
-        while True:
-            channel.send("ping %d" % current_stamp())
-            await asyncio.sleep(1)
+        try:
+            while True:
+                channel.send("ping %d" % current_stamp())
+                await asyncio.sleep(1)
+        except aiortc.exceptions.InvalidStateError:
+            print("Channel closed")
 
     @channel.on("open")
     def on_open() -> None:
