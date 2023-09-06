@@ -95,7 +95,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
             async for data in self.ws:
                 assert isinstance(data, str)
 
-                self.logger.debug(f"Received message: {data}")
+                self.logger.info(f"Received message: {data}")
                 message: Dict[str, Any] = json.loads(data)
                 await self._handle_messages(message)
         except asyncio.CancelledError:
