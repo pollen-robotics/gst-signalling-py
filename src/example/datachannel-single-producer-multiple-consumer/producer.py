@@ -6,13 +6,6 @@ import time
 from gst_signalling import GstSignallingProducer
 
 
-async def run_producer(producer: GstSignallingProducer) -> None:
-    await producer.connect()
-
-    while True:
-        await asyncio.sleep(1)
-
-
 async def setup_tracks(pc: RTCPeerConnection) -> None:
     channel = pc.createDataChannel("chat")
 
@@ -68,12 +61,10 @@ if __name__ == "__main__":
         setup_tracks=setup_tracks,
     )
 
-    coro = run_producer(producer)
-
     # run event loop
     loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(coro)
+        loop.run_until_complete(producer.serve4ever())
     except KeyboardInterrupt:
         pass
     finally:

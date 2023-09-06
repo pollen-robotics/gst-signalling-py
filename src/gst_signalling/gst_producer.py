@@ -1,3 +1,4 @@
+import asyncio
 from .gst_abstract_role import GstSession, GstSignallingAbstractRole
 
 
@@ -9,6 +10,12 @@ class GstSignallingProducer(GstSignallingAbstractRole):
     async def connect(self) -> None:
         await super().connect()
         await self.signalling.set_peer_status(roles=["producer"], name=self.name)
+
+    async def serve4ever(self) -> None:
+        await self.connect()
+
+        while True:
+            await asyncio.sleep(1000)
 
     async def setup_session(self, session_id: str, peer_id: str) -> GstSession:
         session = await super().setup_session(session_id, peer_id)
