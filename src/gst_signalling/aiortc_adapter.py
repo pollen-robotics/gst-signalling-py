@@ -147,14 +147,13 @@ class GstSignalingForAiortc:
         Args:
             message (Union[RTCIceCandidate, RTCSessionDescription]): Message to send.
         """
+        data = json.loads(object_to_string(message))
+        assert self.session_id is not None
+
         if isinstance(message, RTCSessionDescription):
-            await self.signalling.send_peer_message(
-                self.session_id, "sdp", json.loads(object_to_string(message))
-            )
+            await self.signalling.send_peer_message(self.session_id, "sdp", data)
         elif isinstance(message, RTCIceCandidate):
-            await self.signalling.send_peer_message(
-                self.session_id, "ice", json.loads(object_to_string(message))
-            )
+            await self.signalling.send_peer_message(self.session_id, "ice", data)
         else:
             raise ValueError(f"Invalid message type {type(message)}")
 

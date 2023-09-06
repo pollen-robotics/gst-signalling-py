@@ -1,6 +1,6 @@
 from collections import namedtuple
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional
 from aiortc import (
     RTCIceCandidate,
     RTCPeerConnection,
@@ -17,7 +17,12 @@ GstSession = namedtuple("GstSession", ["peer_id", "pc"])
 
 
 class GstSignallingAbstractRole:
-    def __init__(self, host: str, port: int, setup_pc_tracks) -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        setup_pc_tracks: Callable[[RTCPeerConnection], Awaitable[None]],
+    ) -> None:
         self.logger = logging.getLogger(__name__)
 
         signalling = GstSignalling(host=host, port=port)

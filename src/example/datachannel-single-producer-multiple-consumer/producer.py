@@ -1,30 +1,13 @@
 import aiortc
 from aiortc import RTCPeerConnection
+import argparse
 import asyncio
 import logging
 import time
 from gst_signalling import GstSignallingProducer
 
 
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
-    )
-    parser.add_argument(
-        "--signaling-port", default=8443, help="Gstreamer signaling port"
-    )
-    parser.add_argument("--name", default="data-producer", help="Producer name")
-    parser.add_argument("--verbose", "-v", action="count", default=0)
-    args = parser.parse_args()
-
-    if args.verbose == 1:
-        logging.basicConfig(level=logging.INFO)
-    elif args.verbose > 1:
-        logging.basicConfig(level=logging.DEBUG)
-
+def main(args: argparse.Namespace) -> None:
     async def setup_tracks(pc: RTCPeerConnection) -> None:
         channel = pc.createDataChannel("chat")
 
@@ -39,7 +22,7 @@ if __name__ == "__main__":
             except aiortc.exceptions.InvalidStateError:
                 print("Channel closed")
 
-        @channel.on("open")
+        @channel.on("open")  # type: ignore[misc]
         def on_open() -> None:
             asyncio.ensure_future(send_pings())
 
@@ -58,3 +41,23 @@ if __name__ == "__main__":
         pass
     finally:
         loop.run_until_complete(producer.close())
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
+    )
+    parser.add_argument(
+        "--signaling-port", default=8443, help="Gstreamer signaling port"
+    )
+    parser.add_argument("--name", default="data-producer", help="Producer name")
+    parser.add_argument("--verbose", "-v", action="count", default=0)
+    args = parser.parse_args()
+
+    if args.verbose == 1:
+        logging.basicConfig(level=logging.INFO)
+    elif args.verbose > 1:
+        logging.basicConfig(level=logging.DEBUG)
+
+    main(args)

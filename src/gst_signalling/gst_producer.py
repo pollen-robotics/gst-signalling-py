@@ -1,10 +1,18 @@
+from aiortc import RTCPeerConnection
 import asyncio
+from typing import Awaitable, Callable
 from .gst_abstract_role import GstSession, GstSignallingAbstractRole
 
 
 class GstSignallingProducer(GstSignallingAbstractRole):
-    def __init__(self, host: str, port: int, name: str, setup_tracks) -> None:
-        super().__init__(host, port, setup_tracks)
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        name: str,
+        setup_pc_tracks: Callable[[RTCPeerConnection], Awaitable[None]],
+    ) -> None:
+        super().__init__(host, port, setup_pc_tracks)
         self.name = name
 
     async def connect(self) -> None:
