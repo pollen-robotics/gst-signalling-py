@@ -1,5 +1,3 @@
-import json
-from typing import Any, Dict, NamedTuple, Optional
 from aiortc import (
     RTCIceCandidate,
     RTCPeerConnection,
@@ -7,9 +5,11 @@ from aiortc import (
 )
 from aiortc.contrib.signaling import object_from_string, object_to_string
 import asyncio
+import json
 import logging
-
 import pyee
+from typing import Any, Dict, NamedTuple, Optional
+
 
 from .gst_signalling import GstSignalling
 
