@@ -1,8 +1,8 @@
-from aiortc import RTCDataChannel, RTCPeerConnection
+from aiortc import RTCDataChannel
 import argparse
 import asyncio
 import logging
-from gst_signalling import GstSignallingConsumer
+from gst_signalling import GstSession, GstSignallingConsumer
 from gst_signalling.utils import find_producer_peer_id_by_name
 
 
@@ -13,7 +13,16 @@ def main(args: argparse.Namespace) -> None:
 
     close_evt = asyncio.Event()
 
-    async def setup_tracks(pc: RTCPeerConnection) -> None:
+    consumer = GstSignallingConsumer(
+        host=args.signaling_host,
+        port=args.signaling_port,
+        producer_peer_id=peer_id,
+    )
+
+    @consumer.on("new_session")  # type: ignore[misc]
+    def on_new_session(session: GstSession) -> None:
+        pc = session.pc
+
         @pc.on("datachannel")  # type: ignore[misc]
         def on_datachannel(channel: RTCDataChannel) -> None:
             @channel.on("message")  # type: ignore[misc]
@@ -23,13 +32,6 @@ def main(args: argparse.Namespace) -> None:
             @channel.on("close")  # type: ignore[misc]
             def on_close() -> None:
                 close_evt.set()
-
-    consumer = GstSignallingConsumer(
-        host=args.signaling_host,
-        port=args.signaling_port,
-        producer_peer_id=peer_id,
-        setup_pc_tracks=setup_tracks,
-    )
 
     async def run_consumer(consumer: GstSignallingConsumer) -> None:
         await consumer.connect()
