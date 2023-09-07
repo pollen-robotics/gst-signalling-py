@@ -78,6 +78,10 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
     async def close(self) -> None:
         await self.signalling.close()
 
+    async def consume(self) -> None:
+        while True:
+            await asyncio.sleep(1000)
+
     # Session management
     async def setup_session(self, session_id: str, peer_id: str) -> GstSession:
         pc = RTCPeerConnection()
