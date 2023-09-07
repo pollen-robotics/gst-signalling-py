@@ -29,9 +29,9 @@ def main(args: argparse.Namespace) -> None:
             def on_message(message: str) -> None:
                 print("received message:", message)
 
-            @channel.on("close")  # type: ignore[misc]
-            def on_close() -> None:
-                close_evt.set()
+    @consumer.on("close_session")  # type: ignore[misc]
+    def on_close_session(session: GstSession) -> None:
+        close_evt.set()
 
     async def run_consumer(consumer: GstSignallingConsumer) -> None:
         await consumer.connect()
