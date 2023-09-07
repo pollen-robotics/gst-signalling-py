@@ -1,6 +1,3 @@
-from collections import namedtuple
-import json
-from typing import Any, Awaitable, Callable, Dict, Optional
 from aiortc import (
     RTCIceCandidate,
     RTCPeerConnection,
@@ -8,21 +5,32 @@ from aiortc import (
 )
 from aiortc.contrib.signaling import object_from_string, object_to_string
 import asyncio
+import json
 import logging
+import pyee
+from typing import Any, Dict, NamedTuple, Optional
+
 
 from .gst_signalling import GstSignalling
 
 
-GstSession = namedtuple("GstSession", ["peer_id", "pc"])
+GstSession = NamedTuple(
+    "GstSession",
+    [
+        ("peer_id", str),
+        ("pc", RTCPeerConnection),
+    ],
+)
 
 
-class GstSignallingAbstractRole:
+class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
     def __init__(
         self,
         host: str,
         port: int,
-        setup_pc_tracks: Callable[[RTCPeerConnection], Awaitable[None]],
     ) -> None:
+        pyee.AsyncIOEventEmitter.__init__(self)  # type: ignore[no-untyped-call]
+
         self.logger = logging.getLogger(__name__)
 
         signalling = GstSignalling(host=host, port=port)
@@ -60,7 +68,6 @@ class GstSignallingAbstractRole:
             await self.close_session(session_id)
 
         self.signalling = signalling
-        self.setup_pc_tracks = setup_pc_tracks
 
     async def connect(self) -> None:
         assert self.signalling is not None
@@ -74,10 +81,11 @@ class GstSignallingAbstractRole:
     # Session management
     async def setup_session(self, session_id: str, peer_id: str) -> GstSession:
         pc = RTCPeerConnection()
-        await self.setup_pc_tracks(pc)
 
         session = GstSession(peer_id, pc)
         self.sessions[session_id] = session
+
+        self.emit("new_session", session)
 
         return session
 
@@ -113,6 +121,9 @@ class GstSignallingAbstractRole:
 
     async def close_session(self, session_id: str) -> None:
         session = self.sessions.pop(session_id)
+
+        self.emit("close_session", session)
+
         await session.pc.close()
 
     async def send_sdp(self, session_id: str, sdp: RTCSessionDescription) -> None:

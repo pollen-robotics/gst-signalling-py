@@ -1,14 +1,23 @@
 import aiortc
-from aiortc import RTCPeerConnection
 import argparse
 import asyncio
 import logging
 import time
-from gst_signalling import GstSignallingProducer
+
+from gst_signalling import GstSession, GstSignallingProducer
 
 
 def main(args: argparse.Namespace) -> None:
-    async def setup_tracks(pc: RTCPeerConnection) -> None:
+    producer = GstSignallingProducer(
+        host=args.signaling_host,
+        port=args.signaling_port,
+        name=args.name,
+    )
+
+    @producer.on("new_session")  # type: ignore[misc]
+    def on_new_session(session: GstSession) -> None:
+        pc = session.pc
+
         channel = pc.createDataChannel("chat")
 
         async def send_pings() -> None:
@@ -25,13 +34,6 @@ def main(args: argparse.Namespace) -> None:
         @channel.on("open")  # type: ignore[misc]
         def on_open() -> None:
             asyncio.ensure_future(send_pings())
-
-    producer = GstSignallingProducer(
-        host=args.signaling_host,
-        port=args.signaling_port,
-        name=args.name,
-        setup_tracks=setup_tracks,
-    )
 
     # run event loop
     loop = asyncio.get_event_loop()
