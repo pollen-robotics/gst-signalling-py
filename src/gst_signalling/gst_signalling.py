@@ -17,7 +17,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
     Peer --> Server
     - "SetPeerStatus": Set current peer status (see set_peer_status)
     - "StartSession":  Start a session with a producer peer (see start_session)
-    - "EndSession": End an existing session (TODO)
+    - "EndSession": End an existing session (see end_session)
     - "Peer": Send a message to a peer the sender is currently in session with (see send_peer_message)
     - "List": Retrieve the current list of producers (see get_list)
 
@@ -185,6 +185,15 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
             raise RuntimeError("PeerId not yet received.")
 
         message = {"type": "startSession", "peerId": peer_id}
+        await self._send(message)
+
+    async def end_session(self, session_id: str) -> None:
+        """Ends an existing session.
+
+        Args:
+            session_id (str): Session ID.
+        """
+        message = {"type": "endSession", "sessionId": session_id}
         await self._send(message)
 
     async def send_peer_message(
