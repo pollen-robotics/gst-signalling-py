@@ -65,7 +65,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         url = f"ws://{self.host}:{self.port}"
         self.logger.info(f"Connecting to {url}")
-        self.ws = await connect(url)
+        self.ws = await connect(url, ping_interval=None)
         self.logger.info("Connected.")
 
         self.handler_task = asyncio.create_task(self._handler())
