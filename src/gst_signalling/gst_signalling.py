@@ -156,7 +156,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         """Sets the peer status.
 
         Args:
-            roles (List[str]): List of roles the peer has (consumer, listener).
+            roles (List[str]): List of roles the peer has (producer, listener).
             name (str): Name of the peer.
         """
         if self.peer_id is None:
