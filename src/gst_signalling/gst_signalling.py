@@ -109,7 +109,11 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
 
         # Notifies listeners that a peer status has changed
         elif message["type"] == "peerStatusChanged":
-            self.logger.error(f"Unimplemented message handler {message}")
+            roles = message["roles"]
+            meta = message["meta"]
+            peer_id = message["peerId"]
+
+            self.emit("PeerStatusChanged", peer_id, roles, meta)
 
         # Instructs a peer to generate an offer and inform about the session ID
         elif message["type"] == "startSession":
@@ -156,7 +160,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         """Sets the peer status.
 
         Args:
-            roles (List[str]): List of roles the peer has (consumer, listener).
+            roles (List[str]): List of roles the peer has (producer, listener).
             name (str): Name of the peer.
         """
         if self.peer_id is None:
