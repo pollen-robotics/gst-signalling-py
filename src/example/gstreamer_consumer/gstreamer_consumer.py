@@ -4,12 +4,17 @@ import time
 import logging
 from gst_signalling import utils
 import gi
-gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
-def get_producer_id(host : str, port : int, producer_name : str) -> str:
-    #Todo: add a timeout
-    while True:
+gi.require_version("Gst", "1.0")
+
+
+def get_producer_id(
+    host: str, port: int, producer_name: str, timeout: int = 1000
+) -> str:
+    i = 0
+
+    while i < timeout:
         # ToDo: create a client at each iteration. May be not optimal
         producers = utils.get_producer_list(host=host, port=port)
 
@@ -17,17 +22,20 @@ def get_producer_id(host : str, port : int, producer_name : str) -> str:
             logging.info("List received, producers:")
             for producer_id, producer_meta in producers.items():
                 logging.info(f"  - {producer_id}: {producer_meta}")
-                if producer_meta['name'] == producer_name:
+                if producer_meta["name"] == producer_name:
                     logging.info("Target producer found.")
-                    return producer_id
+                    return str(producer_id)
             logging.warning("Target producer not found.")
         else:
             logging.info("List received, no producers.")
-        
+
         time.sleep(1)
+        i += 1
+
+    return str("")
 
 
-def start_consumer(host : str, port : int, producer_id : str) -> None:
+def start_consumer(host: str, port: int, producer_id: str) -> None:
     Gst.init(None)
 
     cmd = f"playbin uri=gstwebrtc://{host}:{port}?peer-id={producer_id}"
@@ -39,12 +47,13 @@ def start_consumer(host : str, port : int, producer_id : str) -> None:
     pipeline.set_state(Gst.State.PLAYING)
 
     try:
-        while True:        
+        while True:
             time.sleep(1)
     except KeyboardInterrupt:
         logging.info("User exit")
     finally:
         pipeline.set_state(Gst.State.NULL)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Get gstreamer producer list")
