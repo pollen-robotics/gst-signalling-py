@@ -69,9 +69,10 @@ def main() -> None:
 
     id = get_producer_id(args.signalling_host, args.signalling_port, args.producer_name)
 
-    logging.info(id)
-
-    start_consumer(args.signalling_host, args.signalling_port, id)
+    if id == "":
+        logging.error("timeout")
+    else:
+        start_consumer(args.signalling_host, args.signalling_port, id)
 
 
 if __name__ == "__main__":

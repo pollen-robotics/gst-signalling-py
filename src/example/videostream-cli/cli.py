@@ -3,7 +3,7 @@ import asyncio
 import logging
 import math
 
-import cv2
+# import cv2
 import numpy
 from aiortc import (
     RTCIceCandidate,
@@ -80,11 +80,12 @@ async def run(pc, player, recorder, signaling, role):
     def add_tracks():
         if player and player.audio:
             pc.addTrack(player.audio)
-
+        """
         if player and player.video:
             pc.addTrack(player.video)
         else:
             pc.addTrack(FlagVideoStreamTrack())
+        """
 
     @pc.on("track")
     def on_track(track):
@@ -122,8 +123,8 @@ async def run(pc, player, recorder, signaling, role):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Video stream from the command line")
-    parser.add_argument("--play-from", help="Read the media from a file and sent it."),
-    parser.add_argument("--record-to", help="Write received media to a file."),
+    parser.add_argument("--play-from", help="Read the media from a file and sent it.")
+    parser.add_argument("--record-to", help="Write received media to a file.")
     parser.add_argument("--verbose", "-v", action="count")
     add_signaling_arguments(parser)
     args = parser.parse_args()
@@ -145,7 +146,9 @@ if __name__ == "__main__":
     if args.record_to:
         recorder = MediaRecorder(args.record_to)
     else:
-        recorder = MediaBlackhole()
+        recorder = MediaRecorder(
+            "pulse", format="alsa"
+        )  # , options={"sample_rate":"48000", "thread_queue_size":"1024", "buffer_size": "512"}) #MediaBlackhole()
 
     # run event loop
     loop = asyncio.get_event_loop()
