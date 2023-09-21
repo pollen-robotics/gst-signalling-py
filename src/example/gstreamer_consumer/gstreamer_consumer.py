@@ -4,9 +4,9 @@ import time
 import logging
 from gst_signalling import utils
 import gi
-from gi.repository import Gst
 
 gi.require_version("Gst", "1.0")
+from gi.repository import Gst  # noqa: E402
 
 
 def get_producer_id(
