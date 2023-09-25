@@ -75,27 +75,9 @@ class GstSignalingForAiortc:
         @self.signalling.on("Peer")
         async def on_peer(session_id: str, message: dict[str, Any]) -> None:
             assert self.session_id == session_id
-
-            if "sdp" in message:
-                message = message["sdp"]
-            elif "ice" in message:
-                message = message["ice"]
-            else:
-                raise ValueError(f"Invalid message {message}")
-
-            if "type" in message:
-                obj = object_from_string(json.dumps(message))
-            elif "candidate" in message:
-                if message["candidate"] == "":
-                    self.logger.info(f"Received empty candidate, ignoring")
-                    return
-
-                obj = candidate_from_sdp(message["candidate"].split(":", 1)[1])
-                obj.sdpMLineIndex = message["sdpMLineIndex"]
-            else:
-                self.logger.error(f"Failed to parse message: {message}")
-                return
-            await self.peer_msg_queue.put(obj)
+            obj = self._parse_peer_message(message)
+            if obj is not None:
+                await self.peer_msg_queue.put(obj)
 
         @self.signalling.on("EndSession")
         async def on_end_session(session_id: str) -> None:
@@ -105,6 +87,31 @@ class GstSignalingForAiortc:
         async def on_error(details: str) -> None:
             self.logger.error(f'Connection closed with error: "{details}"')
             await self.peer_msg_queue.put(BYE)
+
+    def _parse_peer_message(
+        self, message: dict[str, Any]
+    ) -> Optional[Union[RTCSessionDescription, RTCIceCandidate]]:
+        if "sdp" in message:
+            message = message["sdp"]
+        elif "ice" in message:
+            message = message["ice"]
+        else:
+            raise ValueError(f"Invalid message {message}")
+
+        if "type" in message:
+            obj = object_from_string(json.dumps(message))
+            return obj
+        elif "candidate" in message:
+            if message["candidate"] == "":
+                self.logger.info("Received empty candidate, ignoring")
+                return None
+
+            obj = candidate_from_sdp(message["candidate"].split(":", 1)[1])
+            obj.sdpMLineIndex = message["sdpMLineIndex"]
+            return obj
+        else:
+            self.logger.error(f"Failed to parse message: {message}")
+            return None
 
     def _setup_producer(self) -> None:
         @self.signalling.on("StartSession")
