@@ -1,5 +1,6 @@
 from aiortc import RTCIceCandidate, RTCSessionDescription
 from aiortc.contrib.signaling import object_from_string, object_to_string
+from aiortc.sdp import candidate_from_sdp
 import argparse
 import asyncio
 import json
@@ -82,7 +83,18 @@ class GstSignalingForAiortc:
             else:
                 raise ValueError(f"Invalid message {message}")
 
-            obj = object_from_string(json.dumps(message))
+            if "type" in message:
+                obj = object_from_string(json.dumps(message))
+            elif "candidate" in message:
+                if message["candidate"] == "":
+                    self.logger.info(f"Received empty candidate, ignoring")
+                    return
+
+                obj = candidate_from_sdp(message["candidate"].split(":", 1)[1])
+                obj.sdpMLineIndex = message["sdpMLineIndex"]
+            else:
+                self.logger.error(f"Failed to parse message: {message}")
+                return
             await self.peer_msg_queue.put(obj)
 
         @self.signalling.on("EndSession")
