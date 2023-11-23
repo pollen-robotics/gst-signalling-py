@@ -10,6 +10,8 @@ import logging
 import pyee
 from typing import Any, Dict, NamedTuple, Optional
 
+from aiortc.sdp import candidate_from_sdp
+
 
 from .gst_signalling import GstSignalling
 
@@ -118,10 +120,15 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
                     await pc.setRemoteDescription(obj)
 
         elif "ice" in message:
-            obj = object_from_string(json.dumps(message["ice"]))
-            if isinstance(obj, RTCIceCandidate):
-                self.logger.info("Received ice candidate")
-                pc.addIceCandidate(obj)
+            message = message["ice"]
+            if message["candidate"] == "":
+                self.logger.info("Received empty candidate, ignoring")
+                return None
+
+            obj = candidate_from_sdp(message["candidate"].split(":", 1)[1])
+            obj.sdpMLineIndex = message["sdpMLineIndex"]
+
+            await pc.addIceCandidate(obj)
 
     async def close_session(self, session_id: str) -> None:
         session = self.sessions.pop(session_id)
