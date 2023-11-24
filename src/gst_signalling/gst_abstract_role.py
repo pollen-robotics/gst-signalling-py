@@ -42,29 +42,29 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
 
         self.sessions: Dict[str, GstSession] = {}
 
-        @signalling.on("Welcome")
+        @signalling.on("Welcome")  # type: ignore[arg-type]
         def on_welcome(peer_id: str) -> None:
             self.peer_id = peer_id
             self.peer_id_evt.set()
 
-        @signalling.on("StartSession")
+        @signalling.on("StartSession")  # type: ignore[arg-type]
         async def on_start_session(peer_id: str, session_id: str) -> None:
             self.logger.info(f"StartSession received, session_id: {session_id}")
             await self.setup_session(session_id, peer_id)
 
-        @signalling.on("SessionStarted")
+        @signalling.on("SessionStarted")  # type: ignore[arg-type]
         async def on_session_started(peer_id: str, session_id: str) -> None:
             self.logger.info(f"SessionStarted received, session_id: {session_id}")
             await self.setup_session(session_id, peer_id)
 
-        @signalling.on("Peer")
+        @signalling.on("Peer")  # type: ignore[arg-type]
         async def on_peer(session_id: str, message: Dict[str, Dict[str, Any]]) -> None:
             self.logger.info(
                 f"Peer received, session_id: {session_id}, message: {message}"
             )
             await self.peer_for_session(session_id, message)
 
-        @signalling.on("EndSession")
+        @signalling.on("EndSession")  # type: ignore[arg-type]
         async def on_end_session(session_id: str) -> None:
             self.logger.info(f"EndSession received, session_id: {session_id}")
             await self.close_session(session_id)
@@ -120,7 +120,7 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
                     await pc.setRemoteDescription(obj)
 
         elif "ice" in message:
-            if "type" in message and message["type"] == "candidate":
+            if "type" in message and str(message["type"]) == "candidate":
                 obj = object_from_string(json.dumps(message["ice"]))
 
                 if isinstance(obj, RTCIceCandidate):
@@ -129,11 +129,11 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
 
             else:
                 message = message["ice"]
-                if message["candidate"] == "":
+                if str(message["candidate"]) == "":
                     self.logger.info("Received empty candidate, ignoring")
                     return None
 
-                obj = candidate_from_sdp(message["candidate"].split(":", 1)[1])
+                obj = candidate_from_sdp(str(message["candidate"]).split(":", 1)[1])
                 obj.sdpMLineIndex = message["sdpMLineIndex"]
 
                 self.logger.info(f"Received ice candidate {obj}")

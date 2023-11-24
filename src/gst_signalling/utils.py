@@ -22,7 +22,7 @@ def get_producer_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
         signalling = GstSignalling(host=host, port=port)
         await signalling.connect()
 
-        @signalling.on("List")
+        @signalling.on("List")  # type: ignore[arg-type]
         def on_list(found_producers: Dict[str, Dict[str, str]]) -> None:
             producers.update(found_producers)
             got_it.set()
