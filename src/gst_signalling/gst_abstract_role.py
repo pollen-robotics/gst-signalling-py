@@ -120,15 +120,24 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
                     await pc.setRemoteDescription(obj)
 
         elif "ice" in message:
-            message = message["ice"]
-            if message["candidate"] == "":
-                self.logger.info("Received empty candidate, ignoring")
-                return None
+            if "type" in message and message["type"] == "candidate":
+                obj = object_from_string(json.dumps(message["ice"]))
 
-            obj = candidate_from_sdp(message["candidate"].split(":", 1)[1])
-            obj.sdpMLineIndex = message["sdpMLineIndex"]
+                if isinstance(obj, RTCIceCandidate):
+                    self.logger.info(f"Received ice candidate {obj}")
+                    await pc.addIceCandidate(obj)
 
-            await pc.addIceCandidate(obj)
+            else:
+                message = message["ice"]
+                if message["candidate"] == "":
+                    self.logger.info("Received empty candidate, ignoring")
+                    return None
+
+                obj = candidate_from_sdp(message["candidate"].split(":", 1)[1])
+                obj.sdpMLineIndex = message["sdpMLineIndex"]
+
+                self.logger.info(f"Received ice candidate {obj}")
+                await pc.addIceCandidate(obj)
 
     async def close_session(self, session_id: str) -> None:
         session = self.sessions.pop(session_id)
