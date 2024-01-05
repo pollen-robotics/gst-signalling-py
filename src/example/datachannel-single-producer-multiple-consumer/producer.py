@@ -1,8 +1,9 @@
-import aiortc
 import argparse
 import asyncio
 import logging
 import time
+
+import aiortc
 
 from gst_signalling import GstSession, GstSignallingProducer
 
@@ -19,6 +20,10 @@ def main(args: argparse.Namespace) -> None:
         pc = session.pc
 
         channel = pc.createDataChannel("chat")
+
+        @channel.on("message")  # type: ignore[misc]
+        def on_message(message: str) -> None:
+            print("received message:", message)
 
         async def send_pings() -> None:
             try:

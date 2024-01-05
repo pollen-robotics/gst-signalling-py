@@ -1,7 +1,9 @@
-from aiortc import RTCDataChannel
 import argparse
 import asyncio
 import logging
+
+from aiortc import RTCDataChannel
+
 from gst_signalling import GstSession, GstSignallingConsumer
 from gst_signalling.utils import find_producer_peer_id_by_name
 
@@ -28,6 +30,7 @@ def main(args: argparse.Namespace) -> None:
             @channel.on("message")  # type: ignore[misc]
             def on_message(message: str) -> None:
                 print("received message:", message)
+                channel.send("pong")
 
     @consumer.on("close_session")  # type: ignore[misc]
     def on_close_session(session: GstSession) -> None:
