@@ -1,10 +1,11 @@
 import argparse
 import asyncio
 import logging
+import os
 
 from aiortc import RTCDataChannel
 
-from gst_signalling import GstSession, GstSignallingConsumer
+from gst_signalling import GstSignallingConsumer
 from gst_signalling.utils import find_producer_peer_id_by_name
 
 
@@ -21,6 +22,7 @@ def main(args: argparse.Namespace) -> None:
         producer_peer_id=peer_id,
     )
 
+    """
     @consumer.on("new_session")  # type: ignore[misc]
     def on_new_session(session: GstSession) -> None:
         pc = session.pc
@@ -35,6 +37,7 @@ def main(args: argparse.Namespace) -> None:
     @consumer.on("close_session")  # type: ignore[misc]
     def on_close_session(session: GstSession) -> None:
         close_evt.set()
+    """
 
     async def run_consumer(consumer: GstSignallingConsumer) -> None:
         await consumer.connect()
@@ -68,5 +71,6 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.INFO)
     elif args.verbose > 1:
         logging.basicConfig(level=logging.DEBUG)
+        os.environ["GST_DEBUG"] = "4"
 
     main(args)

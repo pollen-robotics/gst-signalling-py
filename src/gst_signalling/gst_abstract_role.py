@@ -1,26 +1,22 @@
-from aiortc import (
-    RTCIceCandidate,
-    RTCPeerConnection,
-    RTCSessionDescription,
-)
-from aiortc.contrib.signaling import object_from_string, object_to_string
 import asyncio
-import json
 import logging
-import pyee
 from typing import Any, Dict, NamedTuple, Optional
 
-from aiortc.sdp import candidate_from_sdp
-
+import gi
+import pyee
 
 from .gst_signalling import GstSignalling
 
+gi.require_version("Gst", "1.0")
+gi.require_version("GstWebRTC", "1.0")
+
+from gi.repository import Gst
 
 GstSession = NamedTuple(
     "GstSession",
     [
         ("peer_id", str),
-        ("pc", RTCPeerConnection),
+        ("pc", Gst.Element),  # type '__gi__.GstWebRTCBin'
     ],
 )
 
@@ -39,6 +35,7 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
 
         self.peer_id: Optional[str] = None
         self.peer_id_evt = asyncio.Event()
+        self._asyncloop = asyncio.get_event_loop()
 
         self.sessions: Dict[str, GstSession] = {}
 
@@ -71,6 +68,52 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
 
         self.signalling = signalling
 
+        Gst.init(None)
+
+        self._pipeline = Gst.Pipeline.new()
+
+    def __del__(self) -> None:
+        Gst.deinit()
+
+    def make_send_sdp(self, sdp, type: str, session_id: str):  # type: ignore[no-untyped-def]
+        self.logger.debug(f"send sdp {type} {sdp}")
+        text = sdp.sdp.as_text()
+        msg = {"type": type, "sdp": text}
+        asyncio.run_coroutine_threadsafe(
+            self.send_sdp(session_id, msg), self._asyncloop
+        )
+
+    def send_ice_candidate_message(self, _, mlineindex, candidate):  # type: ignore[no-untyped-def]
+        icemsg = {"ice": {"candidate": candidate, "sdpMLineIndex": mlineindex}}
+        self.logger.debug(icemsg)
+        # loop = asyncio.new_event_loop()
+        # loop.run_until_complete(self.send_sdp(session_id, icemsg))
+
+    def init_webrtc(self, session_id: str):  # type: ignore[no-untyped-def]
+        webrtc = Gst.ElementFactory.make("webrtcbin")
+        assert webrtc
+
+        # webrtc.set_property("bundle-policy", "max-bundle")
+        # webrtc.set_property("stun-server", "stun://stun.l.google.com:19302")
+        # webrtc.set_property(
+        #    "turn-server",
+        #    "turn://gstreamer:IsGreatWhenYouCanGetItToWork@webrtc.nirbheek.in:3478",
+        # )
+        webrtc.set_property("stun-server", None)
+        webrtc.set_property("turn-server", None)
+
+        # webrtc.connect("on-ice-candidate", lambda *args: self._ices.append(args))
+        # webrtc.connect("on-negotiation-needed", self.on_negotiation_needed, session_id)
+        webrtc.connect("on-ice-candidate", self.send_ice_candidate_message)
+        # webrtc.connect(
+        #    "notify::ice-gathering-state", self.on_ice_gathering_state_notify
+        # )
+
+        self._pipeline.set_state(Gst.State.READY)
+        self._pipeline.add(webrtc)
+
+        return webrtc
+
     async def connect(self) -> None:
         assert self.signalling is not None
 
@@ -86,67 +129,32 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
 
     # Session management
     async def setup_session(self, session_id: str, peer_id: str) -> GstSession:
-        pc = RTCPeerConnection()
+        self.logger.info("setup session")
+        pc = self.init_webrtc(session_id)
 
         session = GstSession(peer_id, pc)
-        self.sessions[session_id] = session
 
-        self.emit("new_session", session)
+        self.sessions[session_id] = session
 
         return session
 
     async def peer_for_session(
-        self, session_id: str, message: Dict[str, Dict[str, Any]]
+        self, session_id: str, message: Dict[str, Dict[str, str]]
     ) -> None:
-        session = self.sessions[session_id]
-        pc = session.pc
-
-        if "sdp" in message:
-            obj = object_from_string(json.dumps(message["sdp"]))
-
-            if isinstance(obj, RTCSessionDescription):
-                if obj.type == "offer":
-                    self.logger.info("Received offer sdp")
-                    await pc.setRemoteDescription(obj)
-
-                    self.logger.info("Sending answer")
-                    await pc.setLocalDescription(await pc.createAnswer())
-
-                    self.logger.info("Sending answer sdp")
-                    await self.send_sdp(session_id, pc.localDescription)
-
-                elif obj.type == "answer":
-                    self.logger.info("Received answer sdp")
-                    await pc.setRemoteDescription(obj)
-
-        elif "ice" in message:
-            if "type" in message and str(message["type"]) == "candidate":
-                obj = object_from_string(json.dumps(message["ice"]))
-
-                if isinstance(obj, RTCIceCandidate):
-                    self.logger.info(f"Received ice candidate {obj}")
-                    await pc.addIceCandidate(obj)
-
-            else:
-                message = message["ice"]
-                if str(message["candidate"]) == "":
-                    self.logger.info("Received empty candidate, ignoring")
-                    return None
-
-                obj = candidate_from_sdp(str(message["candidate"]).split(":", 1)[1])
-                obj.sdpMLineIndex = message["sdpMLineIndex"]
-
-                self.logger.info(f"Received ice candidate {obj}")
-                await pc.addIceCandidate(obj)
+        self.logger.info(f"peer for session {session_id} {message}")
 
     async def close_session(self, session_id: str) -> None:
+        self.logger.info("close session")
+        """
         session = self.sessions.pop(session_id)
 
         self.emit("close_session", session)
 
         await session.pc.close()
+        """
 
-    async def send_sdp(self, session_id: str, sdp: RTCSessionDescription) -> None:
-        await self.signalling.send_peer_message(
-            session_id, "sdp", json.loads(object_to_string(sdp))
-        )
+    async def send_sdp(self, session_id: str, sdp: Dict[str, Dict[str, str]]) -> None:
+        await self.signalling.send_peer_message(session_id, "sdp", sdp)
+
+    async def send_ice(self, session_id: str, ice: Dict[str, Dict[str, str]]) -> None:
+        await self.signalling.send_peer_message(session_id, "ice", ice)

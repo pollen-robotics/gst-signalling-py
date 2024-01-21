@@ -1,9 +1,10 @@
 import asyncio
 import json
 import logging
-import pyee
 from typing import Any, Dict, List, Optional
-from websockets.legacy.client import connect, WebSocketClientProtocol
+
+import pyee
+from websockets.legacy.client import WebSocketClientProtocol, connect
 
 
 class GstSignalling(pyee.AsyncIOEventEmitter):
@@ -201,7 +202,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         await self._send(message)
 
     async def send_peer_message(
-        self, session_id: str, type: str, peer_message: str
+        self, session_id: str, type: str, peer_message: Dict[str, Dict[str, str]]
     ) -> None:
         """Sends a message to a peer the sender is currently in session with.
 

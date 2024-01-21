@@ -1,11 +1,12 @@
 import argparse
 import asyncio
 import logging
+import os
 import time
 
 import aiortc
 
-from gst_signalling import GstSession, GstSignallingProducer
+from gst_signalling import GstSignallingProducer
 
 
 def main(args: argparse.Namespace) -> None:
@@ -15,6 +16,9 @@ def main(args: argparse.Namespace) -> None:
         name=args.name,
     )
 
+    freq_hz = 10
+
+    """
     @producer.on("new_session")  # type: ignore[misc]
     def on_new_session(session: GstSession) -> None:
         pc = session.pc
@@ -32,14 +36,14 @@ def main(args: argparse.Namespace) -> None:
                 while True:
                     dt = time.time() - t0
                     channel.send(f"ping: {dt:.1f}s")
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(1.0 / freq_hz)
             except aiortc.exceptions.InvalidStateError:
                 print("Channel closed")
 
         @channel.on("open")  # type: ignore[misc]
         def on_open() -> None:
             asyncio.ensure_future(send_pings())
-
+    """
     # run event loop
     loop = asyncio.get_event_loop()
     try:
@@ -66,5 +70,6 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.INFO)
     elif args.verbose > 1:
         logging.basicConfig(level=logging.DEBUG)
+        os.environ["GST_DEBUG"] = "4"
 
     main(args)
