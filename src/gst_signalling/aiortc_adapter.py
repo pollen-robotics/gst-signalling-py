@@ -57,7 +57,7 @@ class GstSignalingForAiortc:
         self._setup(remote_producer_peer_id)
 
     def _setup(self, remote_producer_peer_id: Optional[str] = None) -> None:
-        @self.signalling.on("Welcome")
+        @self.signalling.on("Welcome")  # type: ignore[arg-type]
         def on_welcome(peer_id: str) -> None:
             self.logger.info(f"Welcome received, peer_id: {peer_id}")
             self.peer_id = peer_id
@@ -72,18 +72,18 @@ class GstSignalingForAiortc:
                 )
             self._setup_consumer(remote_producer_peer_id)
 
-        @self.signalling.on("Peer")
+        @self.signalling.on("Peer")  # type: ignore[arg-type]
         async def on_peer(session_id: str, message: dict[str, Any]) -> None:
             assert self.session_id == session_id
             obj = self._parse_peer_message(message)
             if obj is not None:
                 await self.peer_msg_queue.put(obj)
 
-        @self.signalling.on("EndSession")
+        @self.signalling.on("EndSession")  # type: ignore[arg-type]
         async def on_end_session(session_id: str) -> None:
             await self.peer_msg_queue.put(BYE)
 
-        @self.signalling.on("Error")
+        @self.signalling.on("Error")  # type: ignore[arg-type]
         async def on_error(details: str) -> None:
             self.logger.error(f'Connection closed with error: "{details}"')
             await self.peer_msg_queue.put(BYE)
@@ -114,7 +114,7 @@ class GstSignalingForAiortc:
             return None
 
     def _setup_producer(self) -> None:
-        @self.signalling.on("StartSession")
+        @self.signalling.on("StartSession")  # type: ignore[arg-type]
         def on_start_session(peer_id: str, session_id: str) -> None:
             self.logger.info(
                 f"StartSession received, peer_id: {peer_id}, session_id: {session_id}"
@@ -125,7 +125,7 @@ class GstSignalingForAiortc:
     def _setup_consumer(self, remote_producer_peer_id: str) -> None:
         self.remote_producer_peer_id = remote_producer_peer_id
 
-        @self.signalling.on("SessionStarted")
+        @self.signalling.on("SessionStarted")  # type: ignore[arg-type]
         def on_session_started(peer_id: str, session_id: str) -> None:
             self.logger.info(
                 f"SessionStarted received, peer_id: {peer_id}, session_id: {session_id}"

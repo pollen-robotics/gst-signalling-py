@@ -10,6 +10,8 @@ import logging
 import pyee
 from typing import Any, Dict, NamedTuple, Optional
 
+from aiortc.sdp import candidate_from_sdp
+
 
 from .gst_signalling import GstSignalling
 
@@ -40,29 +42,29 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
 
         self.sessions: Dict[str, GstSession] = {}
 
-        @signalling.on("Welcome")
+        @signalling.on("Welcome")  # type: ignore[arg-type]
         def on_welcome(peer_id: str) -> None:
             self.peer_id = peer_id
             self.peer_id_evt.set()
 
-        @signalling.on("StartSession")
+        @signalling.on("StartSession")  # type: ignore[arg-type]
         async def on_start_session(peer_id: str, session_id: str) -> None:
             self.logger.info(f"StartSession received, session_id: {session_id}")
             await self.setup_session(session_id, peer_id)
 
-        @signalling.on("SessionStarted")
+        @signalling.on("SessionStarted")  # type: ignore[arg-type]
         async def on_session_started(peer_id: str, session_id: str) -> None:
             self.logger.info(f"SessionStarted received, session_id: {session_id}")
             await self.setup_session(session_id, peer_id)
 
-        @signalling.on("Peer")
+        @signalling.on("Peer")  # type: ignore[arg-type]
         async def on_peer(session_id: str, message: Dict[str, Dict[str, Any]]) -> None:
             self.logger.info(
                 f"Peer received, session_id: {session_id}, message: {message}"
             )
             await self.peer_for_session(session_id, message)
 
-        @signalling.on("EndSession")
+        @signalling.on("EndSession")  # type: ignore[arg-type]
         async def on_end_session(session_id: str) -> None:
             self.logger.info(f"EndSession received, session_id: {session_id}")
             await self.close_session(session_id)
@@ -118,10 +120,24 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
                     await pc.setRemoteDescription(obj)
 
         elif "ice" in message:
-            obj = object_from_string(json.dumps(message["ice"]))
-            if isinstance(obj, RTCIceCandidate):
-                self.logger.info("Received ice candidate")
-                pc.addIceCandidate(obj)
+            if "type" in message and str(message["type"]) == "candidate":
+                obj = object_from_string(json.dumps(message["ice"]))
+
+                if isinstance(obj, RTCIceCandidate):
+                    self.logger.info(f"Received ice candidate {obj}")
+                    await pc.addIceCandidate(obj)
+
+            else:
+                message = message["ice"]
+                if str(message["candidate"]) == "":
+                    self.logger.info("Received empty candidate, ignoring")
+                    return None
+
+                obj = candidate_from_sdp(str(message["candidate"]).split(":", 1)[1])
+                obj.sdpMLineIndex = message["sdpMLineIndex"]
+
+                self.logger.info(f"Received ice candidate {obj}")
+                await pc.addIceCandidate(obj)
 
     async def close_session(self, session_id: str) -> None:
         session = self.sessions.pop(session_id)
