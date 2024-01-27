@@ -1,6 +1,12 @@
 import logging
 from typing import Dict
 
+import gi
+
+gi.require_version("Gst", "1.0")
+gi.require_version("GstWebRTC", "1.0")
+gi.require_version("GstSdp", "1.0")
+
 from gi.repository import Gst, GstSdp, GstWebRTC
 
 from .gst_abstract_role import GstSession, GstSignallingAbstractRole

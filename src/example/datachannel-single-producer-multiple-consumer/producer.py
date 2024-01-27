@@ -4,6 +4,10 @@ import logging
 import os
 import time
 
+import gi
+
+gi.require_version("Gst", "1.0")
+
 from gi.repository import Gst
 
 from gst_signalling import GstSignallingProducer
