@@ -3,17 +3,19 @@ import asyncio
 import logging
 import os
 
+from gi.repository import Gst
+
 from gst_signalling import GstSignallingConsumer
 from gst_signalling.gst_abstract_role import GstSession
 from gst_signalling.utils import find_producer_peer_id_by_name
 
 
-def on_data_channel_message(data_channel, data) -> None:
+def on_data_channel_message(data_channel, data: str) -> None:  # type: ignore[no-untyped-def]
     logging.info(f"Message from DataChannel: {data}")
     data_channel.send_string("pong")
 
 
-def on_data_channel_callback(webrtc, data_channel):
+def on_data_channel_callback(webrtc: Gst.Element, data_channel) -> None:  # type: ignore[no-untyped-def]
     data_channel.connect("on-message-string", on_data_channel_message)
 
 
@@ -34,15 +36,6 @@ def main(args: argparse.Namespace) -> None:
     def on_new_session(session: GstSession) -> None:
         pc = session.pc
         pc.connect("on-data-channel", on_data_channel_callback)
-        print("heeere")
-        """
-        @pc.on("datachannel")  # type: ignore[misc]
-        def on_datachannel(channel: RTCDataChannel) -> None:
-            @channel.on("message")  # type: ignore[misc]
-            def on_message(message: str) -> None:
-                print("received message:", message)
-                channel.send("pong")
-        """
 
     @consumer.on("close_session")  # type: ignore[misc]
     def on_close_session(session: GstSession) -> None:

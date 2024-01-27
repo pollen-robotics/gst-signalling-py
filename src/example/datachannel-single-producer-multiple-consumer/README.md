@@ -7,11 +7,11 @@ This example shows how to use a single producer and multiple consumers.
 * Starts the producer:
 
 ```bash
-python producer.py
+python producer.py [-vv]
 ```
 
 * Starts any number of consumers:
 
 ```bash
-python consumer.py
+python consumer.py [-vv]
 ```

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Dict
 
 from gi.repository import Gst, GstSdp, GstWebRTC
 
@@ -20,12 +20,13 @@ class GstSignallingProducer(GstSignallingAbstractRole):
         await self.connect()
         await self.consume()
 
-    def on_offer_created(self, promise: Gst.Promise, webrtc: Gst.Element, session_id: str):  # type: ignore[no-untyped-def]
+    def on_offer_created(
+        self, promise: Gst.Promise, webrtc: Gst.Element, session_id: str
+    ) -> None:
         self.logger.debug(f"on offer created {promise} {webrtc} {session_id}")
         assert promise.wait() == Gst.PromiseResult.REPLIED
         reply = promise.get_reply()
-        # offer = reply["offer"]
-        offer = reply.get_value("offer")
+        offer = reply.get_value("offer")  # type: ignore[union-attr]
 
         promise = Gst.Promise.new()
         self.logger.info("Offer created, setting local description")
@@ -33,7 +34,7 @@ class GstSignallingProducer(GstSignallingAbstractRole):
         promise.interrupt()
         self.make_send_sdp(offer, "offer", session_id)
 
-    def on_negotiation_needed(self, element, session_id):  # type: ignore[no-untyped-def]
+    def on_negotiation_needed(self, element: Gst.Element, session_id: str) -> None:
         self.logger.debug(f"on negociation needed {element} {session_id}")
         promise = Gst.Promise.new_with_change_func(
             self.on_offer_created, element, session_id
@@ -50,32 +51,9 @@ class GstSignallingProducer(GstSignallingAbstractRole):
 
         self._pipeline.set_state(Gst.State.PLAYING)
 
-        """
-        data_channel = pc.emit("create-data-channel", "myLabel", None)
-        if data_channel:
-            self.on_data_channel(data_channel, pc)
-        else:
-            self.logger.error("Failed to create data channel")
-        
-        """
         self.emit("new_session", session)
 
         return session
-
-    # Fonction de callback pour la gestion des messages du canal de données
-    def on_data_channel_message(self, data_channel, data, length, user_data) -> None:
-        self.logger.info(f"Message from DataChannel: {data}")
-
-    # Fonction de callback pour la gestion de l'état du canal de données
-    def on_data_channel_state_change(self, data_channel, user_data) -> None:
-        state = data_channel.get_state()
-        self.logger.info(f"DataChannel State Changed: {state}")
-
-    # Fonction de callback pour la création du canal de données
-    def on_data_channel(self, data_channel, webrtc) -> None:
-        self.logger.info("DataChannel created")
-        data_channel.connect("on-message-string", self.on_data_channel_message)
-        # data_channel.connect("on-state-change", self.on_data_channel_state_change)
 
     async def peer_for_session(
         self, session_id: str, message: Dict[str, Dict[str, str]]

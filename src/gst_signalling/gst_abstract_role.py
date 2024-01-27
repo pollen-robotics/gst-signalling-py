@@ -75,22 +75,24 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
     def __del__(self) -> None:
         Gst.deinit()
 
-    def make_send_sdp(self, sdp, type: str, session_id: str):  # type: ignore[no-untyped-def]
-        # self.logger.debug(f"send sdp {type} {sdp}")
+    def make_send_sdp(
+        self, sdp: Any, type: str, session_id: str
+    ) -> None:  # sdp is GstWebRTC.WebRTCSessionDescription
         text = sdp.sdp.as_text()
         msg = {"type": type, "sdp": text}
         asyncio.run_coroutine_threadsafe(
             self.send_sdp(session_id, msg), self._asyncloop
         )
 
-    def send_ice_candidate_message(self, _, mlineindex, candidate, session_id: str):  # type: ignore[no-untyped-def]
+    def send_ice_candidate_message(
+        self, _: Gst.Element, mlineindex: int, candidate: str, session_id: str
+    ) -> None:
         icemsg = {"candidate": candidate, "sdpMLineIndex": mlineindex}
-        # self.logger.debug(f"hello {icemsg} {session_id}")
         asyncio.run_coroutine_threadsafe(
             self.send_ice(session_id, icemsg), self._asyncloop
         )
 
-    def init_webrtc(self, session_id: str):  # type: ignore[no-untyped-def]
+    def init_webrtc(self, session_id: str) -> Gst.Element:
         webrtc = Gst.ElementFactory.make("webrtcbin")
         assert webrtc
 
@@ -134,7 +136,7 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
     ) -> None:
         self.logger.info(f"peer for session {session_id} {message}")
 
-    def handle_ice_message(self, webrtc, ice_msg) -> None:  # type: ignore[no-untyped-def]
+    def handle_ice_message(self, webrtc: Gst.Element, ice_msg: Dict[str, Any]) -> None:
         candidate = ice_msg["candidate"]
         sdpmlineindex = ice_msg["sdpMLineIndex"]
         webrtc.emit("add-ice-candidate", sdpmlineindex, candidate)
@@ -152,5 +154,5 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
     async def send_sdp(self, session_id: str, sdp: Dict[str, Dict[str, str]]) -> None:
         await self.signalling.send_peer_message(session_id, "sdp", sdp)
 
-    async def send_ice(self, session_id: str, ice: Dict[str, Dict[str, str]]) -> None:
+    async def send_ice(self, session_id: str, ice: Dict[str, Any]) -> None:
         await self.signalling.send_peer_message(session_id, "ice", ice)
