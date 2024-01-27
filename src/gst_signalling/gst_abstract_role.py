@@ -76,38 +76,29 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
         Gst.deinit()
 
     def make_send_sdp(self, sdp, type: str, session_id: str):  # type: ignore[no-untyped-def]
-        self.logger.debug(f"send sdp {type} {sdp}")
+        # self.logger.debug(f"send sdp {type} {sdp}")
         text = sdp.sdp.as_text()
         msg = {"type": type, "sdp": text}
         asyncio.run_coroutine_threadsafe(
             self.send_sdp(session_id, msg), self._asyncloop
         )
 
-    def send_ice_candidate_message(self, _, mlineindex, candidate):  # type: ignore[no-untyped-def]
-        icemsg = {"ice": {"candidate": candidate, "sdpMLineIndex": mlineindex}}
-        self.logger.debug(icemsg)
-        # loop = asyncio.new_event_loop()
-        # loop.run_until_complete(self.send_sdp(session_id, icemsg))
+    def send_ice_candidate_message(self, _, mlineindex, candidate, session_id: str):  # type: ignore[no-untyped-def]
+        icemsg = {"candidate": candidate, "sdpMLineIndex": mlineindex}
+        # self.logger.debug(f"hello {icemsg} {session_id}")
+        asyncio.run_coroutine_threadsafe(
+            self.send_ice(session_id, icemsg), self._asyncloop
+        )
 
     def init_webrtc(self, session_id: str):  # type: ignore[no-untyped-def]
         webrtc = Gst.ElementFactory.make("webrtcbin")
         assert webrtc
 
-        # webrtc.set_property("bundle-policy", "max-bundle")
-        # webrtc.set_property("stun-server", "stun://stun.l.google.com:19302")
-        # webrtc.set_property(
-        #    "turn-server",
-        #    "turn://gstreamer:IsGreatWhenYouCanGetItToWork@webrtc.nirbheek.in:3478",
-        # )
-        webrtc.set_property("stun-server", None)
-        webrtc.set_property("turn-server", None)
+        webrtc.set_property("bundle-policy", "max-bundle")
+        # webrtc.set_property("stun-server", None)
+        # webrtc.set_property("turn-server", None)
 
-        # webrtc.connect("on-ice-candidate", lambda *args: self._ices.append(args))
-        # webrtc.connect("on-negotiation-needed", self.on_negotiation_needed, session_id)
-        webrtc.connect("on-ice-candidate", self.send_ice_candidate_message)
-        # webrtc.connect(
-        #    "notify::ice-gathering-state", self.on_ice_gathering_state_notify
-        # )
+        webrtc.connect("on-ice-candidate", self.send_ice_candidate_message, session_id)
 
         self._pipeline.set_state(Gst.State.READY)
         self._pipeline.add(webrtc)
@@ -142,6 +133,11 @@ class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
         self, session_id: str, message: Dict[str, Dict[str, str]]
     ) -> None:
         self.logger.info(f"peer for session {session_id} {message}")
+
+    def handle_ice_message(self, webrtc, ice_msg) -> None:  # type: ignore[no-untyped-def]
+        candidate = ice_msg["candidate"]
+        sdpmlineindex = ice_msg["sdpMLineIndex"]
+        webrtc.emit("add-ice-candidate", sdpmlineindex, candidate)
 
     async def close_session(self, session_id: str) -> None:
         self.logger.info("close session")

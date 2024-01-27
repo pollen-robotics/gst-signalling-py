@@ -44,12 +44,11 @@ class GstSignallingConsumer(GstSignallingAbstractRole):
     ) -> None:
         assert promise.wait() == Gst.PromiseResult.REPLIED
         reply = promise.get_reply()
-        answer = reply["answer"]
+        # answer = reply["answer"]
+        answer = reply.get_value("answer")
         promise = Gst.Promise.new()
         webrtc.emit("set-local-description", answer, promise)
         promise.interrupt()  # we don't care about the result, discard it
-        # self.send_sdp(answer)
-        self.logger.debug(f"here {answer}")
         self.make_send_sdp(answer, "answer", session_id)
 
     def on_offer_set(
@@ -84,6 +83,9 @@ class GstSignallingConsumer(GstSignallingAbstractRole):
                 self.logger.warning("Consumer should not receive the answer")
             else:
                 self.logger.error(f"SDP not properly formatted {message['sdp']}")
+
+        elif "ice" in message:
+            self.handle_ice_message(webrtc, message["ice"])
 
         else:
             self.logger.error(f"message not processed {message}")

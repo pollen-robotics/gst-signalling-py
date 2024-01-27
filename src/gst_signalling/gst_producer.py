@@ -24,7 +24,8 @@ class GstSignallingProducer(GstSignallingAbstractRole):
         self.logger.debug(f"on offer created {promise} {webrtc} {session_id}")
         assert promise.wait() == Gst.PromiseResult.REPLIED
         reply = promise.get_reply()
-        offer = reply["offer"]
+        # offer = reply["offer"]
+        offer = reply.get_value("offer")
 
         promise = Gst.Promise.new()
         self.logger.info("Offer created, setting local description")
@@ -47,16 +48,34 @@ class GstSignallingProducer(GstSignallingAbstractRole):
         pc = session.pc
         pc.connect("on-negotiation-needed", self.on_negotiation_needed, session_id)
 
-        pc.connect("on-data-channel", self.on_data_channel)
-
         self._pipeline.set_state(Gst.State.PLAYING)
 
+        """
+        data_channel = pc.emit("create-data-channel", "myLabel", None)
+        if data_channel:
+            self.on_data_channel(data_channel, pc)
+        else:
+            self.logger.error("Failed to create data channel")
+        
+        """
         self.emit("new_session", session)
 
         return session
 
-    def on_data_channel(self, webrtc, channel):
-        self.logger.info("data_channel created")
+    # Fonction de callback pour la gestion des messages du canal de données
+    def on_data_channel_message(self, data_channel, data, length, user_data) -> None:
+        self.logger.info(f"Message from DataChannel: {data}")
+
+    # Fonction de callback pour la gestion de l'état du canal de données
+    def on_data_channel_state_change(self, data_channel, user_data) -> None:
+        state = data_channel.get_state()
+        self.logger.info(f"DataChannel State Changed: {state}")
+
+    # Fonction de callback pour la création du canal de données
+    def on_data_channel(self, data_channel, webrtc) -> None:
+        self.logger.info("DataChannel created")
+        data_channel.connect("on-message-string", self.on_data_channel_message)
+        # data_channel.connect("on-state-change", self.on_data_channel_state_change)
 
     async def peer_for_session(
         self, session_id: str, message: Dict[str, Dict[str, str]]
@@ -82,6 +101,7 @@ class GstSignallingProducer(GstSignallingAbstractRole):
                 self.logger.warning("producer should not receive the offer")
             else:
                 self.logger.error(f"SDP not properly formatted {message['sdp']}")
-
+        elif "ice" in message:
+            self.handle_ice_message(webrtc, message["ice"])
         else:
             self.logger.error(f"message not processed {message}")
