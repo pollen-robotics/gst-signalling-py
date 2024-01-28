@@ -29,8 +29,6 @@ def main(args: argparse.Namespace) -> None:
 
     @producer.on("new_session")  # type: ignore[misc]
     def on_new_session(session: GstSession) -> None:
-        print("heeere")
-
         def on_open(channel: Gst.Element) -> None:
             asyncio.run_coroutine_threadsafe(send_pings(channel), loop)
 

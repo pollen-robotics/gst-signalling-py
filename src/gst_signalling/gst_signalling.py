@@ -3,11 +3,11 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-import pyee
+from pyee.asyncio import AsyncIOEventEmitter
 from websockets.legacy.client import WebSocketClientProtocol, connect
 
 
-class GstSignalling(pyee.AsyncIOEventEmitter):
+class GstSignalling(AsyncIOEventEmitter):
     """Signalling peer for the GStreamer WebRTC implementation.
 
     This class is used to communicate with a GStreamer WebRTC signalling server.
@@ -48,7 +48,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         Args:
             host (str): Hostname of the signalling server.
             port (int): Port of the signalling server."""
-        pyee.AsyncIOEventEmitter.__init__(self)  # type: ignore[no-untyped-call]
+        AsyncIOEventEmitter.__init__(self)
 
         self.logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict, NamedTuple, Optional
 
 import gi
-import pyee
+from pyee.asyncio import AsyncIOEventEmitter
 
 from .gst_signalling import GstSignalling
 
@@ -21,13 +21,13 @@ GstSession = NamedTuple(
 )
 
 
-class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
+class GstSignallingAbstractRole(AsyncIOEventEmitter):
     def __init__(
         self,
         host: str,
         port: int,
     ) -> None:
-        pyee.AsyncIOEventEmitter.__init__(self)  # type: ignore[no-untyped-call]
+        super().__init__()
 
         self.logger = logging.getLogger(__name__)
 
