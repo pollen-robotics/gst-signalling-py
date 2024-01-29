@@ -97,6 +97,7 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
         assert webrtc
 
         webrtc.set_property("bundle-policy", "max-bundle")
+        webrtc.set_property("latency", 0)
         # webrtc.set_property("stun-server", None)
         # webrtc.set_property("turn-server", None)
 
