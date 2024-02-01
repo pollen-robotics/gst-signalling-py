@@ -8,10 +8,10 @@ import gi
 
 gi.require_version("Gst", "1.0")
 
-from gi.repository import GstWebRTC
+from gi.repository import GstWebRTC  # noqa : E402
 
-from gst_signalling import GstSignallingProducer
-from gst_signalling.gst_abstract_role import GstSession
+from gst_signalling import GstSignallingProducer  # noqa : E402
+from gst_signalling.gst_abstract_role import GstSession  # noqa : E402
 
 
 def on_data_channel_message(
