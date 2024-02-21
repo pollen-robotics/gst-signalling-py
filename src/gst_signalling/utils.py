@@ -1,5 +1,6 @@
 import asyncio
 from typing import Dict
+import argparse
 
 from .gst_signalling import GstSignalling
 
@@ -56,3 +57,32 @@ def find_producer_peer_id_by_name(host: str, port: int, name: str) -> str:
             return producer_id
 
     raise KeyError(f"Producer {name} not found.")
+
+def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
+    """Adds command line arguments for GstSignalingForAiortc.
+
+    * signaling-host: Hostname of the signalling server.
+    * signaling-port: Port of the signalling server.
+    * role: Signalling role (consumer or producer).
+    * name: Peer name.
+    * remote-producer-peer-id: Producer peer_id (required in consumer role!).
+    """
+    parser.add_argument(
+        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
+    )
+    parser.add_argument(
+        "--signaling-port", default=8443, help="Gstreamer signaling port"
+    )
+    parser.add_argument("role", choices=["consumer", "producer"], help="Signaling role")
+    parser.add_argument("--name", default="aiortc-peer", help="peer name")
+    parser.add_argument(
+        "--remote-producer-peer-id",
+        type=str,
+        help="producer peer_id (in consumer role, either set this or remote-producer-peer-name!)",
+    )
+    parser.add_argument(
+        "--remote-producer-peer-name",
+        type=str,
+        default="aiortc-peer",
+        help="producer peer_name (in consumer role, either set this or remote-producer-peer-id!)",
+    )
