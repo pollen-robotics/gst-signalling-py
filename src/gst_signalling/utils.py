@@ -35,7 +35,6 @@ def get_producer_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
 
         return producers
 
-    # return asyncio.run(get_list())
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(get_list())
 
