@@ -58,6 +58,7 @@ def find_producer_peer_id_by_name(host: str, port: int, name: str) -> str:
 
     raise KeyError(f"Producer {name} not found.")
 
+
 def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
     """Adds command line arguments for GstSignalingForAiortc.
 
