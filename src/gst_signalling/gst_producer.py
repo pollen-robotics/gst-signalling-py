@@ -20,9 +20,7 @@ class GstSignallingProducer(GstSignallingAbstractRole):
         await self.connect()
         await self.consume()
 
-    def on_offer_created(
-        self, promise: Gst.Promise, webrtc: Gst.Element, session_id: str
-    ) -> None:
+    def on_offer_created(self, promise: Gst.Promise, webrtc: Gst.Element, session_id: str) -> None:
         self.logger.debug(f"on offer created {promise} {webrtc} {session_id}")
         assert promise.wait() == Gst.PromiseResult.REPLIED
         reply = promise.get_reply()
@@ -36,9 +34,7 @@ class GstSignallingProducer(GstSignallingAbstractRole):
 
     def on_negotiation_needed(self, element: Gst.Element, session_id: str) -> None:
         self.logger.debug(f"on negociation needed {element} {session_id}")
-        promise = Gst.Promise.new_with_change_func(
-            self.on_offer_created, element, session_id
-        )
+        promise = Gst.Promise.new_with_change_func(self.on_offer_created, element, session_id)
         element.emit("create-offer", None, promise)
 
     async def setup_session(self, session_id: str, peer_id: str) -> GstSession:
@@ -55,9 +51,7 @@ class GstSignallingProducer(GstSignallingAbstractRole):
 
         return session
 
-    async def peer_for_session(
-        self, session_id: str, message: Dict[str, Dict[str, str]]
-    ) -> None:
+    async def peer_for_session(self, session_id: str, message: Dict[str, Dict[str, str]]) -> None:
         self.logger.info(f"peer for session {session_id} {message}")
 
         session = self.sessions[session_id]

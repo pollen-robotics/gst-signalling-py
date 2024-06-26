@@ -14,9 +14,7 @@ from gst_signalling import GstSignallingProducer  # noqa : E402
 from gst_signalling.gst_abstract_role import GstSession  # noqa : E402
 
 
-def on_data_channel_message(
-    data_channel: GstWebRTC.WebRTCDataChannel, data: str
-) -> None:
+def on_data_channel_message(data_channel: GstWebRTC.WebRTCDataChannel, data: str) -> None:
     logging.info(f"Message from DataChannel: {data}")
 
 
@@ -65,12 +63,8 @@ def main(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
-    )
-    parser.add_argument(
-        "--signaling-port", default=8443, help="Gstreamer signaling port"
-    )
+    parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
+    parser.add_argument("--signaling-port", default=8443, help="Gstreamer signaling port")
     parser.add_argument("--name", default="data-producer", help="Producer name")
     parser.add_argument("--verbose", "-v", action="count", default=0)
     args = parser.parse_args()

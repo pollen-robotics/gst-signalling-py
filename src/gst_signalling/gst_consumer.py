@@ -37,9 +37,7 @@ class GstSignallingConsumer(GstSignallingAbstractRole):
 
         return session
 
-    def on_answer_created(
-        self, promise: Gst.Promise, webrtc: Gst.Element, session_id: str
-    ) -> None:
+    def on_answer_created(self, promise: Gst.Promise, webrtc: Gst.Element, session_id: str) -> None:
         assert promise.wait() == Gst.PromiseResult.REPLIED
         reply = promise.get_reply()
         # answer = reply["answer"]
@@ -49,18 +47,12 @@ class GstSignallingConsumer(GstSignallingAbstractRole):
         promise.interrupt()  # we don't care about the result, discard it
         self.make_send_sdp(answer, "answer", session_id)
 
-    def on_offer_set(
-        self, promise: Gst.Promise, webrtc: Gst.Element, session_id: str
-    ) -> None:
+    def on_offer_set(self, promise: Gst.Promise, webrtc: Gst.Element, session_id: str) -> None:
         assert promise.wait() == Gst.PromiseResult.REPLIED
-        promise = Gst.Promise.new_with_change_func(
-            self.on_answer_created, webrtc, session_id
-        )
+        promise = Gst.Promise.new_with_change_func(self.on_answer_created, webrtc, session_id)
         webrtc.emit("create-answer", None, promise)
 
-    async def peer_for_session(
-        self, session_id: str, message: Dict[str, Dict[str, str]]
-    ) -> None:
+    async def peer_for_session(self, session_id: str, message: Dict[str, Dict[str, str]]) -> None:
         self.logger.info(f"peer for session {session_id} {message}")
 
         session = self.sessions[session_id]
@@ -71,9 +63,7 @@ class GstSignallingConsumer(GstSignallingAbstractRole):
                 _, sdpmsg = GstSdp.SDPMessage.new_from_text(message["sdp"]["sdp"])
                 sdp_type = GstWebRTC.WebRTCSDPType.OFFER
                 offer = GstWebRTC.WebRTCSessionDescription.new(sdp_type, sdpmsg)
-                promise = Gst.Promise.new_with_change_func(
-                    self.on_offer_set, webrtc, session_id
-                )
+                promise = Gst.Promise.new_with_change_func(self.on_offer_set, webrtc, session_id)
                 webrtc.emit("set-remote-description", offer, promise)
                 self.logger.debug("set remote desc done")
 

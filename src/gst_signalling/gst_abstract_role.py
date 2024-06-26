@@ -56,9 +56,7 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
 
         @signalling.on("Peer")  # type: ignore[arg-type]
         async def on_peer(session_id: str, message: Dict[str, Dict[str, Any]]) -> None:
-            self.logger.info(
-                f"Peer received, session_id: {session_id}, message: {message}"
-            )
+            self.logger.info(f"Peer received, session_id: {session_id}, message: {message}")
             await self.peer_for_session(session_id, message)
 
         @signalling.on("EndSession")  # type: ignore[arg-type]
@@ -75,22 +73,14 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
     def __del__(self) -> None:
         Gst.deinit()
 
-    def make_send_sdp(
-        self, sdp: Any, type: str, session_id: str
-    ) -> None:  # sdp is GstWebRTC.WebRTCSessionDescription
+    def make_send_sdp(self, sdp: Any, type: str, session_id: str) -> None:  # sdp is GstWebRTC.WebRTCSessionDescription
         text = sdp.sdp.as_text()
         msg = {"type": type, "sdp": text}
-        asyncio.run_coroutine_threadsafe(
-            self.send_sdp(session_id, msg), self._asyncloop
-        )
+        asyncio.run_coroutine_threadsafe(self.send_sdp(session_id, msg), self._asyncloop)
 
-    def send_ice_candidate_message(
-        self, _: Gst.Element, mlineindex: int, candidate: str, session_id: str
-    ) -> None:
+    def send_ice_candidate_message(self, _: Gst.Element, mlineindex: int, candidate: str, session_id: str) -> None:
         icemsg = {"candidate": candidate, "sdpMLineIndex": mlineindex}
-        asyncio.run_coroutine_threadsafe(
-            self.send_ice(session_id, icemsg), self._asyncloop
-        )
+        asyncio.run_coroutine_threadsafe(self.send_ice(session_id, icemsg), self._asyncloop)
 
     def init_webrtc(self, session_id: str) -> Gst.Element:
         webrtc = Gst.ElementFactory.make("webrtcbin")
@@ -131,9 +121,7 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
 
         return session
 
-    async def peer_for_session(
-        self, session_id: str, message: Dict[str, Dict[str, str]]
-    ) -> None:
+    async def peer_for_session(self, session_id: str, message: Dict[str, Dict[str, str]]) -> None:
         self.logger.info(f"peer for session {session_id} {message}")
 
     def handle_ice_message(self, webrtc: Gst.Element, ice_msg: Dict[str, Any]) -> None:

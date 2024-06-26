@@ -20,9 +20,7 @@ def on_data_channel_callback(webrtc: Gst.Element, data_channel) -> None:  # type
 
 
 def main(args: argparse.Namespace) -> None:
-    peer_id = find_producer_peer_id_by_name(
-        args.signaling_host, args.signaling_port, args.producer_name
-    )
+    peer_id = find_producer_peer_id_by_name(args.signaling_host, args.signaling_port, args.producer_name)
 
     close_evt = asyncio.Event()
 
@@ -57,15 +55,9 @@ def main(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
-    )
-    parser.add_argument(
-        "--signaling-port", default=8443, help="Gstreamer signaling port"
-    )
-    parser.add_argument(
-        "--producer-name", default="data-producer", help="Producer name"
-    )
+    parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
+    parser.add_argument("--signaling-port", default=8443, help="Gstreamer signaling port")
+    parser.add_argument("--producer-name", default="data-producer", help="Producer name")
     parser.add_argument("--verbose", "-v", action="count", default=0)
     args = parser.parse_args()
 

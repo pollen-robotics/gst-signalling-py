@@ -201,9 +201,7 @@ class GstSignalling(AsyncIOEventEmitter):
         message = {"type": "endSession", "sessionId": session_id}
         await self._send(message)
 
-    async def send_peer_message(
-        self, session_id: str, type: str, peer_message: Dict[str, Any]
-    ) -> None:
+    async def send_peer_message(self, session_id: str, type: str, peer_message: Dict[str, Any]) -> None:
         """Sends a message to a peer the sender is currently in session with.
 
         Args:

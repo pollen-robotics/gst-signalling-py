@@ -33,12 +33,8 @@ def main(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
-    )
-    parser.add_argument(
-        "--signaling-port", default=8443, help="Gstreamer signaling port"
-    )
+    parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
+    parser.add_argument("--signaling-port", default=8443, help="Gstreamer signaling port")
     parser.add_argument("--name", default="listener", help="Producer name")
     parser.add_argument("--verbose", "-v", action="count", default=0)
     args = parser.parse_args()
