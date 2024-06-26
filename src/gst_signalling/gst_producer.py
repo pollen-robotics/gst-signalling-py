@@ -26,7 +26,7 @@ class GstSignallingProducer(GstSignallingAbstractRole):
         self.logger.debug(f"on offer created {promise} {webrtc} {session_id}")
         assert promise.wait() == Gst.PromiseResult.REPLIED
         reply = promise.get_reply()
-        offer = reply.get_value("offer")
+        offer = reply.get_value("offer")  # type: ignore[union-attr]
 
         promise = Gst.Promise.new()
         self.logger.info("Offer created, setting local description")
