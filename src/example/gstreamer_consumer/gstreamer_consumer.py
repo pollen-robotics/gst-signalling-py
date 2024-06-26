@@ -1,9 +1,11 @@
 import argparse
+import logging
 import os
 import time
-import logging
-from gst_signalling import utils
+
 import gi
+
+from gst_signalling import utils
 
 gi.require_version("Gst", "1.0")
 from gi.repository import Gst  # noqa: E402

@@ -43,7 +43,7 @@ class GstSignallingConsumer(GstSignallingAbstractRole):
         assert promise.wait() == Gst.PromiseResult.REPLIED
         reply = promise.get_reply()
         # answer = reply["answer"]
-        answer = reply.get_value("answer")  # type: ignore[union-attr]
+        answer = reply.get_value("answer")
         promise = Gst.Promise.new()
         webrtc.emit("set-local-description", answer, promise)
         promise.interrupt()  # we don't care about the result, discard it

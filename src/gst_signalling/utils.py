@@ -1,6 +1,6 @@
+import argparse
 import asyncio
 from typing import Dict
-import argparse
 
 from .gst_signalling import GstSignalling
 
