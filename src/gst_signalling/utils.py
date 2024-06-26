@@ -67,12 +67,8 @@ def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
     * name: Peer name.
     * remote-producer-peer-id: Producer peer_id (required in consumer role!).
     """
-    parser.add_argument(
-        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
-    )
-    parser.add_argument(
-        "--signaling-port", default=8443, help="Gstreamer signaling port"
-    )
+    parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
+    parser.add_argument("--signaling-port", default=8443, help="Gstreamer signaling port")
     parser.add_argument("role", choices=["consumer", "producer"], help="Signaling role")
     parser.add_argument("--name", default="aiortc-peer", help="peer name")
     parser.add_argument(

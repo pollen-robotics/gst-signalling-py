@@ -11,9 +11,7 @@ gi.require_version("Gst", "1.0")
 from gi.repository import Gst  # noqa: E402
 
 
-def get_producer_id(
-    host: str, port: int, producer_name: str, timeout: int = 1000
-) -> str:
+def get_producer_id(host: str, port: int, producer_name: str, timeout: int = 1000) -> str:
     i = 0
 
     while i < timeout:
