@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from threading import Thread
 from typing import Any, Dict, NamedTuple, Optional
 
 import gi
