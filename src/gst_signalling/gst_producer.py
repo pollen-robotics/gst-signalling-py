@@ -45,8 +45,7 @@ class GstSignallingProducer(GstSignallingAbstractRole):
         pc = session.pc
         pc.connect("on-negotiation-needed", self.on_negotiation_needed, session_id)
 
-        self._pipeline.set_state(Gst.State.PLAYING)
-
+        pc.sync_state_with_parent()
         self.emit("new_session", session)
 
         return session
