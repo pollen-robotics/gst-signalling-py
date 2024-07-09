@@ -69,8 +69,11 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
         Gst.init(None)
 
         self._pipeline = Gst.Pipeline.new()
+        # pipeline will only contain dynamically added webrtcbins
+        self._pipeline.set_state(Gst.State.PLAYING)
 
     def __del__(self) -> None:
+        self._pipeline.set_state(Gst.State.NULL)
         Gst.deinit()
 
     def make_send_sdp(self, sdp: Any, type: str, session_id: str) -> None:  # sdp is GstWebRTC.WebRTCSessionDescription
@@ -87,12 +90,8 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
         assert webrtc
 
         webrtc.set_property("bundle-policy", "max-bundle")
-        # webrtc.set_property("stun-server", None)
-        # webrtc.set_property("turn-server", None)
-
         webrtc.connect("on-ice-candidate", self.send_ice_candidate_message, session_id)
 
-        self._pipeline.set_state(Gst.State.READY)
         self._pipeline.add(webrtc)
 
         return webrtc
@@ -131,13 +130,12 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
 
     async def close_session(self, session_id: str) -> None:
         self.logger.info("close session")
-        """
+
         session = self.sessions.pop(session_id)
-
-        self.emit("close_session", session)
-
-        await session.pc.close()
-        """
+        self._pipeline.remove(session.pc)
+        session.pc.set_state(Gst.State.NULL)
+        # self.emit("close_session", session)
+        # await session.pc.close()
 
     async def send_sdp(self, session_id: str, sdp: Dict[str, Dict[str, str]]) -> None:
         await self.signalling.send_peer_message(session_id, "sdp", sdp)
