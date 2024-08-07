@@ -14,14 +14,22 @@ jobs:
       - name : Install Rust
         uses: hecrj/setup-rust-action@v2
 
-      - name: Install Gst Signalling Server
-        run: |
-          git clone -b 0.12.8 --depth 1 https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git
-          cd gst-plugins-rs/net/webrtc/signalling/
-          cargo build
-
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+            path : gst-signalling
+
+      - name: Checkout tools repo
+        uses: actions/checkout@v4
+        with:
+            repository: https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git
+            path: gst-plugins-rs
+            ref: 0.12.8
+
+      - name: Install Gst Signalling Server
+        run: |          
+          cd $GITHUB_WORKSPACE/gst-plugins-rs/net/webrtc/signalling/
+          cargo build
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -30,6 +38,7 @@ jobs:
           cache: 'pip' # caching pip dependencies
       - name: Install dependencies
         run: |
+          cd $GITHUB_WORKSPACE/gst-signalling
           python -m pip install --upgrade pip
           pip install .[dev]
 
@@ -37,7 +46,7 @@ jobs:
         uses: BerniWittmann/background-server-action@v1
         with:
             command: coverage run -m pytest, coverage xml, coverage json, coverage html
-            start: cd gst-plugins-rs/net/webrtc/signalling/, cargo run --bin gst-webrtc-signalling-server
+            start: cd $GITHUB_WORKSPACE/gst-plugins-rs/net/webrtc/signalling/, cargo run --bin gst-webrtc-signalling-server
             wait-on: 'http://localhost:8443'
 
       - name: Archive code coverage html report
