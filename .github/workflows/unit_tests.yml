@@ -38,7 +38,6 @@ jobs:
         with:
             command: coverage run -m pytest, coverage xml, coverage json, coverage html
             start: cd $GITHUB_WORKSPACE/gst-plugins-rs/net/webrtc/signalling/ && cargo run --bin gst-webrtc-signalling-server
-            wait-on: 'http://localhost:8443'
 
       - name: Archive code coverage html report
         uses: actions/upload-artifact@v4
