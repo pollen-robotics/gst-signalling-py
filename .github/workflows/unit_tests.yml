@@ -16,8 +16,6 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-            path : gst-signalling
 
       - name: Install Gst Signalling Server
         run: |
@@ -41,7 +39,7 @@ jobs:
         uses: BerniWittmann/background-server-action@v1
         with:
             command: coverage run -m pytest, coverage xml, coverage json, coverage html
-            start: cd $GITHUB_WORKSPACE/gst-plugins-rs/net/webrtc/signalling/, cargo run --bin gst-webrtc-signalling-server
+            start: cd $GITHUB_WORKSPACE/gst-plugins-rs/net/webrtc/signalling/ && cargo run --bin gst-webrtc-signalling-server
             wait-on: 'http://localhost:8443'
 
       - name: Archive code coverage html report
