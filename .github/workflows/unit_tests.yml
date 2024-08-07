@@ -36,8 +36,14 @@ jobs:
       - name: Unit tests
         uses: BerniWittmann/background-server-action@v1
         with:
-            command: sleep 5, coverage run -m pytest, coverage xml, coverage json, coverage html
+            command: sleep 5 && coverage run -m pytest
             start: cd $GITHUB_WORKSPACE/gst-plugins-rs/net/webrtc/signalling/ && cargo run --bin gst-webrtc-signalling-server
+
+      - name: Generate reports
+        run: |        
+            coverage xml
+            coverage json
+            coverage html
 
       - name: Archive code coverage html report
         uses: actions/upload-artifact@v4
