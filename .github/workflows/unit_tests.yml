@@ -19,12 +19,13 @@ jobs:
         with:
             path : gst-signalling
 
-      - name: Checkout tools repo
+      - name: Checkout gst-plugins-rs
         uses: actions/checkout@v4
         with:
-            repository: https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git
+            repository: gstreamer/gst-plugins-rs
             path: gst-plugins-rs
             ref: 0.12.8
+            github-server-url: https://gitlab.freedesktop.org
 
       - name: Install Gst Signalling Server
         run: |          
