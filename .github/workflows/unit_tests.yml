@@ -19,7 +19,6 @@ jobs:
 
       - name: Install Gst Signalling Server
         run: |
-          cd $GITHUB_WORKSPACE  
           git clone -b 0.12.8 --depth 1 https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git        
           cd gst-plugins-rs/net/webrtc/signalling/
           cargo build
@@ -31,7 +30,6 @@ jobs:
           cache: 'pip' # caching pip dependencies
       - name: Install dependencies
         run: |
-          cd $GITHUB_WORKSPACE/gst-signalling
           python -m pip install --upgrade pip
           pip install .[dev]
 
