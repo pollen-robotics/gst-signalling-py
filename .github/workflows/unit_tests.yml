@@ -32,3 +32,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install .[dev]
+
+      - name: Unit tests
+        uses: BerniWittmann/background-server-action@v1
+        with:
+            command: coverage run -m pytest, coverage xml, coverage json, coverage html
+            start: cd gst-plugins-rs/net/webrtc/signalling/, cargo run --bin gst-webrtc-signalling-server
+            wait-on: 'http://localhost:8443'
+
+      - name: Archive code coverage html report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: htmlcov
+      - name: Get Cover 
+        uses: orgoro/coverage@v3.1
+        with:
+          coverageFile: coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract results
+        run: |
+          export TOTAL=$(python -c "import json;print(json.load(open('coverage.json'))['totals']['percent_covered_display'])")
+          echo "total=$TOTAL" >> $GITHUB_ENV
+          echo "### Total coverage: ${TOTAL}%" >> $GITHUB_STEP_SUMMARY
