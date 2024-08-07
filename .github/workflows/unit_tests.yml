@@ -14,13 +14,15 @@ jobs:
       - name : Install Rust
         uses: hecrj/setup-rust-action@v2
 
-      - name: Clone gst-plugins-rs
+      - name: Install Gst Signalling Server
         run: |
           git clone -b 0.12.8 --depth 1 https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs.git
           cd gst-plugins-rs/net/webrtc/signalling/
           cargo build
 
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -29,4 +31,4 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install .
+          pip install .[dev]
