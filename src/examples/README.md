@@ -1,22 +1,31 @@
-# Gstreamer signaling with aiortc examples
+# Examples
 
-## Examples
+## Simple recorder
 
-You can find different examples related to gstreamer signaling in this folder.
-In particular, you can find examples for:
+WebRTC client that records the streams into gdp files, and then mux them into a mp4. Gstreamer rust plugins must be installed. Please follow the [documentation](https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs/-/tree/main/net/webrtc).
 
-* [retrieving the list of producers](./get_producer_list.py)
-* [peer status listener](./listener.py)
-* [data producer and multiple consumer](./datachannel-single-producer-multiple-consumer/)
+You can directly provided the peer webrtc name (i.e. *robot* for Reachy), or the peer id. Please use --help for more details about the command.
 
+The recorder can be started as follow and will generate a mp4 file.
 
-## Aiortc examples
-Some of the examples are directly taken from the great [aiortc project](https://github.com/aiortc/aiortc) to make sure that our gstreamer signaling is as compatible with the aiortc library as possible.
+```shell
+python src/examples/simple_recorder.py --remote-producer-peer-name robot
+```
 
-You can have a look at:
+## Signalling tools
 
-* [datachannel-cli](./datachannel-cli/)
-* [videostream-cli](./videostream-cli/)
+### Listener
 
-Those are good entry points if you are already using aiortc and want to switch to gstreamer signaling.
+The listener simplies print the status of the peer connected to the signalling server
 
+```shell
+python src/examples/listener.py 
+```
+
+### List of producers
+
+The following commands prints the list of the producers connected to the signalling server
+
+```shell
+python src/examples/get_producer_list.py
+```
