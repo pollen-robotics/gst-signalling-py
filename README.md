@@ -52,3 +52,17 @@ See [this page](https://pollen-robotics.notion.site/Gstreamer-WebRTC-signaling-8
 ## Contribute
 
 Please refer to our [template repository](https://github.com/pollen-robotics/python-template) for guidlines and coding style.
+
+Development tools can be installed with
+
+```bash
+pip install -e .[dev]
+```
+
+### Unit tests
+
+The [gstreamer signalling server](https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs/-/tree/main/net/webrtc/) is required to run on the localhost. Then run
+
+```bash
+pytest
+```
