@@ -1,12 +1,14 @@
 import argparse
+import os
+import subprocess
 from typing import Optional
 
 import gi
 
 gi.require_version("Gst", "1.0")
-from gi.repository import Gst
+from gi.repository import Gst  # noqa : E402
 
-from gst_signalling.utils import find_producer_peer_id_by_name
+from gst_signalling.utils import find_producer_peer_id_by_name  # noqa : E402
 
 
 class GstRecorder:
@@ -115,6 +117,41 @@ def process_msg(bus: Gst.Bus) -> bool:
     return True
 
 
+def save_file(file_name: str) -> None:
+    """
+    mux the gdp streams with a command similar to
+    gst-launch-1.0 \
+        mp4mux name=mux ! filesink location=recording.mp4 \
+        filesrc location=video_0.gdp ! gdpdepay ! h264parse ! queue ! mux. \
+        filesrc location=video_1.gdp ! gdpdepay ! h264parse ! queue ! mux. \
+        filesrc location=audio_0.gdp ! gdpdepay ! opusparse ! queue ! mux.
+    """
+
+    base_command = f"gst-launch-1.0 mp4mux name=mux ! filesink location={file_name} "
+    files = [f for f in os.listdir() if f.endswith(".gdp")]
+
+    if len(files) == 0:
+        print("no gdp file found")
+        return
+    else:
+        print(f"gdp files to combine: {files}")
+
+    file_commands = []
+
+    for file in files:
+        if os.path.isfile(file):
+            if "video" in file:
+                file_commands.append(f"filesrc location={file} ! gdpdepay ! h264parse ! queue ! mux.")
+            elif "audio" in file:
+                file_commands.append(f"filesrc location={file} ! gdpdepay ! opusparse ! queue ! mux.")
+
+    command = base_command + " ".join(file_commands)
+
+    print(f"running : {command}")
+
+    subprocess.run(command, shell=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="webrtc gstreamer simple recorder")
     parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
@@ -129,6 +166,8 @@ def main() -> None:
         type=str,
         help="producer name",
     )
+
+    parser.add_argument("--output", type=str, help="output mp4 file", default="recording.mp4")
 
     args = parser.parse_args()
 
@@ -153,15 +192,8 @@ def main() -> None:
         # Free resources
         recorder.stop()
 
+    save_file(args.output)
+
 
 if __name__ == "__main__":
     main()
-
-"""
-This will create video_x.gdp streams. You can mux them using:
-gst-launch-1.0 \
-    mp4mux name=mux ! filesink location=recording.mp4 \
-    filesrc location=video_0.gdp ! gdpdepay ! h264parse ! queue ! mux. \
-    filesrc location=video_1.gdp ! gdpdepay ! h264parse ! queue ! mux. \
-    filesrc location=audio_0.gdp ! gdpdepay ! opusparse ! queue ! mux.
-"""
