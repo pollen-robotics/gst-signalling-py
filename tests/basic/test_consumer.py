@@ -1,12 +1,11 @@
+import asyncio
+
 import pytest
 
 from gst_signalling import GstSignallingConsumer, GstSignallingProducer
 
 
-# @pytest.mark.asyncio
 async def test_consumer(signalling_host: str, signalling_port: int, producer_common: GstSignallingProducer) -> None:
-    # close_evt = asyncio.Event()
-
     consumer = GstSignallingConsumer(
         host=signalling_host,
         port=signalling_port,
