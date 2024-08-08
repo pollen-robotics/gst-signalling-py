@@ -2,18 +2,11 @@
 
 This repository provides a Python implementation of the [Gstreamer WebRTC signalling](https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs/-/tree/main/net/webrtc) protocol. 
 
-* It provides an API close to the gstreamer API with a [producer](./src/gst_signalling/gst_producer.py) and a [consumer](./src/gst_signalling/gst_consumer.py). This allows to simply write producer/consumer examples using gstreamer signalling. It works with single producer and multiple consumers. See the [data producer example](./src/example/datachannel-single-producer-multiple-consumer/) for more details.
-* And an API matching the signaling examples from the [aiortc](https://github.com/aiortc/aiortc) library. Some of the examples given here, are directly taken from aiortc with only minor modifications to adapt to the specifity of the gstreamer signalling. They could be a good starting point to understand how to use this library with aiortc.
+It provides an API close to the gstreamer API with a [producer](./src/gst_signalling/gst_producer.py) and a [consumer](./src/gst_signalling/gst_consumer.py). This allows to simply write producer/consumer examples using gstreamer signalling. It works with single producer and multiple consumers for exchanging data. See the [data producer example](./src/example/datachannel-single-producer-multiple-consumer/) for more details.
 
-_Please note that while most WebRTC libraries use the word signaling, the gstreamer implementation use singalling. This repository uses both trying to match closely to the used APIs._
+It also provides tools to list and monitor the peers connected to a signalling server.
 
-### Features 
-
-- [x] Producer and consumer support
-- [ ] Listener
-- [x] Examples
-    - [x] Integration with aiortc
-    - [x] Integration with gstreamer
+_Note that there is no example of audiovideo streaming. Gstreamer provides [rust plugins](https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs) that directly communicate with a signalling server_
 
 ## Installation
 
@@ -25,7 +18,7 @@ pip install -e .
 
 ## Usage
 
-See the examples for more details.
+See the [examples](src/example/) for more details.
 
 ## Protocol
 
