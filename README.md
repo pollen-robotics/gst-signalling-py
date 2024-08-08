@@ -1,5 +1,7 @@
 # gst-signalling-py: Gstreamer WebRTC signalling in Python
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) ![linter](https://github.com/pollen-robotics/reachy2-sdk/actions/workflows/lint.yml/badge.svg) ![pytest](https://github.com/pollen-robotics/reachy2-sdk/actions/workflows/unit_tests.yml/badge.svg) ![coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/FabienDanieau/17eb617c2e60c2dc189478dd3be6e323/raw/covbadge.json)
+
 This repository provides a Python implementation of the [Gstreamer WebRTC signalling](https://gitlab.freedesktop.org/gstreamer/gst-plugins-rs/-/tree/main/net/webrtc) protocol. 
 
 It provides an API close to the gstreamer API with a [producer](./src/gst_signalling/gst_producer.py) and a [consumer](./src/gst_signalling/gst_consumer.py). This allows to simply write producer/consumer examples using gstreamer signalling. It works with single producer and multiple consumers for exchanging data. See the [data producer example](./src/example/datachannel-single-producer-multiple-consumer/) for more details.
