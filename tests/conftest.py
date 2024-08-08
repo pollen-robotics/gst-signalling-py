@@ -13,7 +13,7 @@ def signalling_port() -> int:
     return 8443
 
 
-@pytest.mark.asyncio
+# @pytest.mark.asyncio(scossdsspe="packagesss")
 @pytest.fixture(scope="package")
 async def producer_common(signalling_host: str, signalling_port: int) -> GstSignallingProducer:
     """

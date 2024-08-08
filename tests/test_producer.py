@@ -3,7 +3,7 @@ import pytest
 from gst_signalling import GstSignallingProducer
 
 
-@pytest.mark.asyncio
+# @pytest.mark.asyncio
 async def test_simple_producer(signalling_host: str, signalling_port: int) -> None:
     producer = GstSignallingProducer(
         host=signalling_host,
