@@ -74,7 +74,7 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
 
     def __del__(self) -> None:
         self._pipeline.set_state(Gst.State.NULL)
-        Gst.deinit()
+        # Gst.deinit()
 
     def make_send_sdp(self, sdp: Any, type: str, session_id: str) -> None:  # sdp is GstWebRTC.WebRTCSessionDescription
         text = sdp.sdp.as_text()
