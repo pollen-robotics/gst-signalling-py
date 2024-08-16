@@ -21,7 +21,7 @@ docker build -t webrtcrecorder -f gst-signalling-py/src/examples/recorder/Docker
 Then run the recorder from within a container. Change `~/Videos/`by the path where you want the recording to be saved to.
 
 ```shell
-docker run --network host -v ~/Videos/:/root/output webrtcrecorder --remote-producer-peer-name robot --signaling-host <ip_robot> --output /root/output/recording.mp4
+docker run -it --network host -v ~/Videos/:/root/output webrtcrecorder --remote-producer-peer-name robot --signaling-host <ip_robot> --output /root/output/recording.mp4
 ```
 
 ## Signalling tools
