@@ -1,7 +1,28 @@
+import argparse
 import asyncio
 from typing import Dict
 
 from .gst_signalling import GstSignalling
+
+
+async def get_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
+    producers = {}
+    got_it = asyncio.Event()
+
+    signalling = GstSignalling(host=host, port=port)
+    await signalling.connect()
+
+    @signalling.on("List")  # type: ignore[arg-type]
+    def on_list(found_producers: Dict[str, Dict[str, str]]) -> None:
+        producers.update(found_producers)
+        got_it.set()
+
+    await signalling.send_list()
+    await got_it.wait()
+
+    await signalling.close()
+
+    return producers
 
 
 def get_producer_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
@@ -15,26 +36,8 @@ def get_producer_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
         and the value is a dictionary with the producer metadata (eg. name).
     """
 
-    async def get_list() -> Dict[str, Dict[str, str]]:
-        producers = {}
-        got_it = asyncio.Event()
-
-        signalling = GstSignalling(host=host, port=port)
-        await signalling.connect()
-
-        @signalling.on("List")  # type: ignore[arg-type]
-        def on_list(found_producers: Dict[str, Dict[str, str]]) -> None:
-            producers.update(found_producers)
-            got_it.set()
-
-        await signalling.send_list()
-        await got_it.wait()
-
-        await signalling.close()
-
-        return producers
-
-    return asyncio.run(get_list())
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(get_list(host, port))
 
 
 def find_producer_peer_id_by_name(host: str, port: int, name: str) -> str:
@@ -54,3 +57,29 @@ def find_producer_peer_id_by_name(host: str, port: int, name: str) -> str:
             return producer_id
 
     raise KeyError(f"Producer {name} not found.")
+
+
+def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
+    """Adds command line arguments for GstSignaling.
+
+    * signaling-host: Hostname of the signalling server.
+    * signaling-port: Port of the signalling server.
+    * role: Signalling role (consumer or producer).
+    * name: Peer name.
+    * remote-producer-peer-id: Producer peer_id (required in consumer role!).
+    """
+    parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
+    parser.add_argument("--signaling-port", default=8443, help="Gstreamer signaling port")
+    parser.add_argument("role", choices=["consumer", "producer"], help="Signaling role")
+    parser.add_argument("--name", default="my-name", help="peer name")
+    parser.add_argument(
+        "--remote-producer-peer-id",
+        type=str,
+        help="producer peer_id (in consumer role, either set this or remote-producer-peer-name!)",
+    )
+    parser.add_argument(
+        "--remote-producer-peer-name",
+        type=str,
+        default="remote-producer-peer-name",
+        help="producer peer_name (in consumer role, either set this or remote-producer-peer-id!)",
+    )

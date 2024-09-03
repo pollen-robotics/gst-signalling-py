@@ -1,12 +1,13 @@
 import asyncio
 import json
 import logging
-import pyee
 from typing import Any, Dict, List, Optional
-from websockets.legacy.client import connect, WebSocketClientProtocol
+
+from pyee.asyncio import AsyncIOEventEmitter
+from websockets.legacy.client import WebSocketClientProtocol, connect
 
 
-class GstSignalling(pyee.AsyncIOEventEmitter):
+class GstSignalling(AsyncIOEventEmitter):
     """Signalling peer for the GStreamer WebRTC implementation.
 
     This class is used to communicate with a GStreamer WebRTC signalling server.
@@ -47,7 +48,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         Args:
             host (str): Hostname of the signalling server.
             port (int): Port of the signalling server."""
-        pyee.AsyncIOEventEmitter.__init__(self)  # type: ignore[no-untyped-call]
+        AsyncIOEventEmitter.__init__(self)
 
         self.logger = logging.getLogger(__name__)
 
@@ -200,9 +201,7 @@ class GstSignalling(pyee.AsyncIOEventEmitter):
         message = {"type": "endSession", "sessionId": session_id}
         await self._send(message)
 
-    async def send_peer_message(
-        self, session_id: str, type: str, peer_message: str
-    ) -> None:
+    async def send_peer_message(self, session_id: str, type: str, peer_message: Dict[str, Any]) -> None:
         """Sends a message to a peer the sender is currently in session with.
 
         Args:
