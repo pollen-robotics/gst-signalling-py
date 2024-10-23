@@ -134,8 +134,7 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
         session = self.sessions.pop(session_id)
         self._pipeline.remove(session.pc)
         session.pc.set_state(Gst.State.NULL)
-        # self.emit("close_session", session)
-        # await session.pc.close()
+        self.emit("close_session", session)
 
     async def send_sdp(self, session_id: str, sdp: Dict[str, Dict[str, str]]) -> None:
         await self.signalling.send_peer_message(session_id, "sdp", sdp)
