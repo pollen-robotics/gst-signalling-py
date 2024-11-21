@@ -16,6 +16,7 @@ GstSession = NamedTuple(
     "GstSession",
     [
         ("peer_id", str),
+        ("session_id", str),
         ("pc", Gst.Element),  # type '__gi__.GstWebRTCBin'
     ],
 )
@@ -35,6 +36,7 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
 
         self.peer_id: Optional[str] = None
         self.peer_id_evt = asyncio.Event()
+        self.consume_evt = asyncio.Event()
         self._asyncloop = asyncio.get_event_loop()
 
         self.sessions: Dict[str, GstSession] = {}
@@ -104,17 +106,19 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
 
     async def close(self) -> None:
         await self.signalling.close()
+        self.consume_evt.set()
 
     async def consume(self) -> None:
-        while True:
-            await asyncio.sleep(1000)
+        # while True:
+        #    await asyncio.sleep(1000)
+        await self.consume_evt.wait()
 
     # Session management
     async def setup_session(self, session_id: str, peer_id: str) -> GstSession:
         self.logger.info("setup session")
         pc = self.init_webrtc(session_id)
 
-        session = GstSession(peer_id, pc)
+        session = GstSession(peer_id, session_id, pc)
 
         self.sessions[session_id] = session
 
@@ -130,11 +134,14 @@ class GstSignallingAbstractRole(AsyncIOEventEmitter):
 
     async def close_session(self, session_id: str) -> None:
         self.logger.info("close session")
-
-        session = self.sessions.pop(session_id)
-        self._pipeline.remove(session.pc)
-        session.pc.set_state(Gst.State.NULL)
-        self.emit("close_session", session)
+        try:
+            session = self.sessions.pop(session_id)
+            self._pipeline.remove(session.pc)
+            session.pc.set_state(Gst.State.NULL)
+            await self.signalling.end_session(session_id)
+            # self.emit("close_session", session)
+        except KeyError:
+            self.logger.warning("Session not found")
 
     async def send_sdp(self, session_id: str, sdp: Dict[str, Dict[str, str]]) -> None:
         await self.signalling.send_peer_message(session_id, "sdp", sdp)
