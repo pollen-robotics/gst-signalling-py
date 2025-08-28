@@ -83,7 +83,7 @@ class GstSignalling(AsyncIOEventEmitter):
 
         self.logger.info("Closing connection.")
         await self.ws.close()
-        self.logger.info("Closed.")
+        self.logger.debug("Closed.")
 
     # Messages (server --> peer)
     async def _handler(self) -> None:
@@ -95,7 +95,7 @@ class GstSignalling(AsyncIOEventEmitter):
             async for data in self.ws:
                 assert isinstance(data, str)
 
-                self.logger.info(f"Received message: {data}")
+                self.logger.debug(f"Received message: {data}")
                 message: Dict[str, Any] = json.loads(data)
                 await self._handle_messages(message)
         except asyncio.CancelledError:
