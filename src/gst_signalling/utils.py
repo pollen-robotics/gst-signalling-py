@@ -59,6 +59,25 @@ def find_producer_peer_id_by_name(host: str, port: int, name: str) -> str:
     raise KeyError(f"Producer {name} not found.")
 
 
+async def async_find_producer_peer_id_by_name(host: str, port: int, name: str) -> str:
+    """Finds the peer ID of a producer by its name.
+
+    Args:
+        name (str): Name of the producer.
+    Returns:
+        str: Producer peer ID (if multiple entries, the first is returned).
+    Raises:
+        KeyError: If the producer is not found.
+    """
+    producers = await get_list(host=host, port=port)
+
+    for producer_id, producer_meta in producers.items():
+        if producer_meta["name"] == name:
+            return producer_id
+
+    raise KeyError(f"Producer {name} not found.")
+
+
 def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
     """Adds command line arguments for GstSignaling.
 
@@ -68,8 +87,12 @@ def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
     * name: Peer name.
     * remote-producer-peer-id: Producer peer_id (required in consumer role!).
     """
-    parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
-    parser.add_argument("--signaling-port", default=8443, help="Gstreamer signaling port")
+    parser.add_argument(
+        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
+    )
+    parser.add_argument(
+        "--signaling-port", default=8443, help="Gstreamer signaling port"
+    )
     parser.add_argument("role", choices=["consumer", "producer"], help="Signaling role")
     parser.add_argument("--name", default="my-name", help="peer name")
     parser.add_argument(
