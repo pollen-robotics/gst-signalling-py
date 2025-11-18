@@ -9,7 +9,7 @@ class GstSignallingListener(GstSignallingAbstractRole):
         GstSignallingAbstractRole.__init__(self, host=host, port=port)
         self.name = name
 
-        @self.signalling.on("PeerStatusChanged")  # type: ignore[arg-type]
+        @self.signalling.on("PeerStatusChanged")
         def on_peer_status_changed(
             peer_id: str,
             roles: List[str],
