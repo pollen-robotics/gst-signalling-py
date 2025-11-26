@@ -1,20 +1,14 @@
-from aiortc import (
-    RTCIceCandidate,
-    RTCPeerConnection,
-    RTCSessionDescription,
-)
-from aiortc.contrib.signaling import object_from_string, object_to_string
 import asyncio
 import json
 import logging
-import pyee
 from typing import Any, Dict, NamedTuple, Optional
 
+from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription
+from aiortc.contrib.signaling import object_from_string, object_to_string
 from aiortc.sdp import candidate_from_sdp
-
+from pyee.asyncio import AsyncIOEventEmitter
 
 from .gst_signalling import GstSignalling
-
 
 GstSession = NamedTuple(
     "GstSession",
@@ -25,13 +19,13 @@ GstSession = NamedTuple(
 )
 
 
-class GstSignallingAbstractRole(pyee.AsyncIOEventEmitter):
+class GstSignallingAbstractRole(AsyncIOEventEmitter):
     def __init__(
         self,
         host: str,
         port: int,
     ) -> None:
-        pyee.AsyncIOEventEmitter.__init__(self)  # type: ignore[no-untyped-call]
+        AsyncIOEventEmitter.__init__(self)  # type: ignore[no-untyped-call]
 
         self.logger = logging.getLogger(__name__)
 
