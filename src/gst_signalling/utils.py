@@ -5,11 +5,14 @@ from typing import Dict
 from .gst_signalling import GstSignalling
 
 
-async def get_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
+async def get_list(
+    host: str, port: int, ssl: bool = False
+) -> Dict[str, Dict[str, str]]:
     producers = {}
     got_it = asyncio.Event()
 
     signalling = GstSignalling(host=host, port=port)
+    signalling = GstSignalling(host=host, port=port, ssl=ssl)
     await signalling.connect()
 
     @signalling.on("List")
