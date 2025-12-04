@@ -42,12 +42,13 @@ class GstSignalling(AsyncIOEventEmitter):
         print(f"Welcome received, peer_id: {peer_id}")
     """
 
-    def __init__(self, host: str, port: int, ssl=False) -> None:
+    def __init__(self, host: str, port: int, ssl: bool = False) -> None:
         """Initializes the signalling peer.
 
         Args:
             host (str): Hostname of the signalling server.
-            port (int): Port of the signalling server."""
+            port (int): Port of the signalling server.
+            ssl (bool, optional): Whether to use SSL/TLS. Defaults to False."""
         AsyncIOEventEmitter.__init__(self)
 
         self.logger = logging.getLogger(__name__)
