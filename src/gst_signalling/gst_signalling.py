@@ -42,12 +42,13 @@ class GstSignalling(AsyncIOEventEmitter):
         print(f"Welcome received, peer_id: {peer_id}")
     """
 
-    def __init__(self, host: str, port: int) -> None:
+    def __init__(self, host: str, port: int, ssl: bool = False) -> None:
         """Initializes the signalling peer.
 
         Args:
             host (str): Hostname of the signalling server.
-            port (int): Port of the signalling server."""
+            port (int): Port of the signalling server.
+            ssl (bool, optional): Whether to use SSL/TLS. Defaults to False."""
         AsyncIOEventEmitter.__init__(self)
 
         self.logger = logging.getLogger(__name__)
@@ -55,6 +56,7 @@ class GstSignalling(AsyncIOEventEmitter):
         self.ws: Optional[WebSocketClientProtocol] = None
         self.host = host
         self.port = port
+        self.ssl = ssl
 
         self.peer_id: Optional[str] = None
         self.handler_task: Optional[asyncio.Task[None]] = None
@@ -64,7 +66,7 @@ class GstSignalling(AsyncIOEventEmitter):
         if self.ws is not None:
             raise RuntimeError("Already connected.")
 
-        url = f"ws://{self.host}:{self.port}"
+        url = f"ws{'s' if self.ssl else ''}://{self.host}:{self.port}"
         self.logger.info(f"Connecting to {url}")
         self.ws = await connect(url, ping_interval=None)
         self.logger.info("Connected.")
