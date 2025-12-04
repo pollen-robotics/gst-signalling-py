@@ -11,7 +11,6 @@ async def get_list(
     producers = {}
     got_it = asyncio.Event()
 
-    signalling = GstSignalling(host=host, port=port)
     signalling = GstSignalling(host=host, port=port, ssl=ssl)
     await signalling.connect()
 
