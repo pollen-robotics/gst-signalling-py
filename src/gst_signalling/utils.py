@@ -1,11 +1,14 @@
 import argparse
 import asyncio
+import threading
 from typing import Dict
 
 from .gst_signalling import GstSignalling
 
 
-async def get_list(host: str, port: int, ssl: bool = False) -> Dict[str, Dict[str, str]]:
+async def get_list(
+    host: str, port: int, ssl: bool = False
+) -> Dict[str, Dict[str, str]]:
     producers = {}
     got_it = asyncio.Event()
 
@@ -36,8 +39,25 @@ def get_producer_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
         and the value is a dictionary with the producer metadata (eg. name).
     """
 
-    loop = asyncio.get_event_loop()
-    return loop.run_until_complete(get_list(host, port))
+    result = None
+    error = None
+
+    def runner():
+        nonlocal result, error
+        try:
+            result = asyncio.run(get_list(host=host, port=port))
+        except Exception as e:
+            error = e
+
+    thread = threading.Thread(target=runner, daemon=True)
+    thread.start()
+    thread.join()
+
+    if error:
+        raise error
+
+    assert result is not None
+    return result
 
 
 def find_producer_peer_id_by_name(host: str, port: int, name: str) -> str:
@@ -87,8 +107,12 @@ def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
     * name: Peer name.
     * remote-producer-peer-id: Producer peer_id (required in consumer role!).
     """
-    parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
-    parser.add_argument("--signaling-port", default=8443, help="Gstreamer signaling port")
+    parser.add_argument(
+        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
+    )
+    parser.add_argument(
+        "--signaling-port", default=8443, help="Gstreamer signaling port"
+    )
     parser.add_argument("role", choices=["consumer", "producer"], help="Signaling role")
     parser.add_argument("--name", default="my-name", help="peer name")
     parser.add_argument(
