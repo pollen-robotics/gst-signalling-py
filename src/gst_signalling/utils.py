@@ -6,9 +6,7 @@ from typing import Dict
 from .gst_signalling import GstSignalling
 
 
-async def get_list(
-    host: str, port: int, ssl: bool = False
-) -> Dict[str, Dict[str, str]]:
+async def get_list(host: str, port: int, ssl: bool = False) -> Dict[str, Dict[str, str]]:
     producers = {}
     got_it = asyncio.Event()
 
@@ -107,12 +105,8 @@ def add_signaling_arguments(parser: argparse.ArgumentParser) -> None:
     * name: Peer name.
     * remote-producer-peer-id: Producer peer_id (required in consumer role!).
     """
-    parser.add_argument(
-        "--signaling-host", default="127.0.0.1", help="Gstreamer signaling host"
-    )
-    parser.add_argument(
-        "--signaling-port", default=8443, help="Gstreamer signaling port"
-    )
+    parser.add_argument("--signaling-host", default="127.0.0.1", help="Gstreamer signaling host")
+    parser.add_argument("--signaling-port", default=8443, help="Gstreamer signaling port")
     parser.add_argument("role", choices=["consumer", "producer"], help="Signaling role")
     parser.add_argument("--name", default="my-name", help="peer name")
     parser.add_argument(
