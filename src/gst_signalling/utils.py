@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import threading
 from typing import Dict
 
 from .gst_signalling import GstSignalling
@@ -36,8 +37,25 @@ def get_producer_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
         and the value is a dictionary with the producer metadata (eg. name).
     """
 
-    loop = asyncio.get_event_loop()
-    return loop.run_until_complete(get_list(host, port))
+    result = None
+    error = None
+
+    def runner() -> None:
+        nonlocal result, error
+        try:
+            result = asyncio.run(get_list(host=host, port=port))
+        except Exception as e:
+            error = e
+
+    thread = threading.Thread(target=runner, daemon=True)
+    thread.start()
+    thread.join()
+
+    if error:
+        raise error
+
+    assert result is not None
+    return result
 
 
 def find_producer_peer_id_by_name(host: str, port: int, name: str) -> str:
