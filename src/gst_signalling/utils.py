@@ -40,7 +40,7 @@ def get_producer_list(host: str, port: int) -> Dict[str, Dict[str, str]]:
     result = None
     error = None
 
-    def runner():
+    def runner() -> None:
         nonlocal result, error
         try:
             result = asyncio.run(get_list(host=host, port=port))
